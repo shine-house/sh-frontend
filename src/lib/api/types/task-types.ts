@@ -47,3 +47,15 @@ export interface ListTaskResponse {
   items: TaskResponse[];
   metadata: MetadataPagination;
 }
+
+// TODO: create new endpoints to return these infos
+//  refactor the create and update tasks to return this
+export interface TaskWithStatus extends TaskResponse {
+  is_available: boolean;
+  last_execution: TaskExecutionResponse | null;
+}
+
+export interface ListTaskWithStatusResponse {
+  items: TaskWithStatus[];
+  metadata: MetadataPagination;
+}

@@ -1,4 +1,4 @@
-import type { MetadataPagination, UUID } from "./util-types";
+import type { MetadataPagination, UUID } from "../lib/api/types/util-types";
 
 export interface ListRoomResponse {
   items: RoomResponse[];

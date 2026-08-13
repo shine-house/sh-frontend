@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { getCurrentUser, signIn, signUp, signOut} from "@/lib/api/auth";
-import type {UserResponse } from "@/lib/api/types/user";
+import type {UserResponse } from "@/lib/api/types/user-types";
 import { toast } from "sonner";
 
 
