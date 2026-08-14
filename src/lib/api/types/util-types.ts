@@ -17,3 +17,7 @@ export interface ErrorResponse{
   request_id:UUID;
   timestamp: string;
 }
+
+export interface InfoMessage{
+  message:string;
+}

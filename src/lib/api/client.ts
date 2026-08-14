@@ -1,3 +1,4 @@
+import type { ErrorResponse } from "./types/util-types";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -9,11 +10,17 @@ export const tokenStorage = {
   clear: () => localStorage.removeItem(TOKEN_KEY),
 };
 
-class ApiError extends Error {
-  status: number;
-  constructor(message: string, status: number) {
-    super(message);
+
+export class ApiError extends Error {
+  public readonly status: number;
+  public readonly data: ErrorResponse;
+
+  constructor(status: number, data: ErrorResponse) {
+    super(data.message);
+
+    this.name = "ApiError";
     this.status = status;
+    this.data = data;
   }
 }
 
@@ -33,20 +40,51 @@ async function request<T>(
   });
 
   if (!res.ok) {
-    if (res.status === 401) tokenStorage.clear();
-    const body = await res.json().catch(() => ({}));
-    throw new ApiError(body.detail ?? res.statusText, res.status);
+    if (res.status === 401) {
+      tokenStorage.clear();
+    }
+
+    const body = await res.json().catch(() => null);
+
+    if (body) {
+      throw new ApiError(res.status, body);
+    }
+
+    throw new ApiError(res.status, {
+      error_code: "UNKNOWN_ERROR",
+      message: res.statusText || "Erro inesperado.",
+      request_id: "",
+      timestamp: new Date().toISOString(),
+    });
   }
 
-  if (res.status === 204) return undefined as T;
+  if (res.status === 204) {
+    return undefined as T;
+  }
+
   return res.json();
 }
 
 export const apiClient = {
-  get: <T>(path: string) => request<T>(path, { method: "GET" }),
+  get: <T>(path: string) =>
+    request<T>(path, {
+      method: "GET",
+    }),
+
   post: <T>(path: string, body?: unknown) =>
-    request<T>(path, { method: "POST", body: body ? JSON.stringify(body) : undefined }),
+    request<T>(path, {
+      method: "POST",
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    }),
+
   patch: <T>(path: string, body?: unknown) =>
-    request<T>(path, { method: "PATCH", body: body ? JSON.stringify(body) : undefined }),
-  delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
+    request<T>(path, {
+      method: "PATCH",
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    }),
+
+  delete: <T>(path: string) =>
+    request<T>(path, {
+      method: "DELETE",
+    }),
 };
