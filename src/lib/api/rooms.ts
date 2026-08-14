@@ -8,18 +8,27 @@ import type {
 } from "@/context/room-types";
 import type { ActiveZoneResponse } from "@/lib/api/types/zone-types";
 
-export const listRooms = () => apiClient.get<ListRoomResponse>("/rooms");
+export const createRoomsApi = (householdId: string) => {
+  const basePath = `/households/${householdId}/rooms`;
 
-export const createRoom = (data: CreateRoomRequest) =>
-  apiClient.post<RoomResponse>("/rooms", data);
+  return {
+    listRooms: () => apiClient.get<ListRoomResponse>(basePath),
 
-export const updateRoom = (id: string, data: UpdateRoomRequest) =>
-  apiClient.patch<RoomResponse>(`/rooms/${id}`, data);
+    createRoom: (data: CreateRoomRequest) =>
+      apiClient.post<RoomResponse>(basePath, data),
 
-export const deleteRoom = (id: string) => apiClient.delete<void>(`/rooms/${id}`);
+    updateRoom: (id: string, data: UpdateRoomRequest) =>
+      apiClient.patch<RoomResponse>(`${basePath}/${id}`, data),
 
-export const reorderRooms = (data: RoomReorderRequest) =>
-  apiClient.post<ListRoomResponse>("/rooms/reorder", data);
+    deleteRoom: (id: string) =>
+      apiClient.delete<void>(`${basePath}/${id}`),
 
-export const getActiveZone = () =>
-  apiClient.get<ActiveZoneResponse>("/rooms/active-zone");
+    reorderRooms: (data: RoomReorderRequest) =>
+      apiClient.post<ListRoomResponse>(`${basePath}/reorder`, data),
+
+    getActiveZone: () =>
+      apiClient.get<ActiveZoneResponse>(`${basePath}/active-zone`),
+  };
+};
+
+export type RoomsApi = ReturnType<typeof createRoomsApi>;
