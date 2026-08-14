@@ -161,7 +161,8 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ trigger }) => {
               variant="outline"
               className="w-full"
               onClick={handleGoogleLogin}
-              disabled={isLoading}
+              disabled={true}
+              // disabled={isLoading}
             >
               <svg viewBox="0 0 24 24" className="mr-2 h-4 w-4">
                 <path
@@ -262,7 +263,8 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ trigger }) => {
               variant="outline"
               className="w-full"
               onClick={handleGoogleLogin}
-              disabled={isLoading}
+              disabled={true}
+              // disabled={isLoading}
             >
               <svg viewBox="0 0 24 24" className="mr-2 h-4 w-4">
                 <path

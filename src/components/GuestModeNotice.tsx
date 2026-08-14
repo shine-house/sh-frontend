@@ -17,7 +17,7 @@ const GuestModeNotice: React.FC = () => {
       <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" />
       <AlertDescription className="flex items-center justify-between">
         <span className="text-amber-800 dark:text-amber-200">
-          Você está no modo visitante. Suas alterações não serão sincronizadas entre dispositivos.
+          Você está no modo visitante. Suas alterações não serão sincronizadas.
         </span>
         <AuthDialog 
           trigger={

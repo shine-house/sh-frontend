@@ -1,16 +1,15 @@
-
 import React, { useState } from "react";
-import { useTask } from "@/contexts/TaskContext";
+import { useTask } from "@/context/TaskContext";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -24,19 +23,10 @@ import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import type { TaskWithStatus } from "@/lib/api/types/task-types";
 
 interface TaskItemProps {
-  task: {
-    id: string;
-    name: string;
-    description?: string;
-    roomId?: string;
-    type: "daily" | "weekly" | "zone";
-    done: boolean;
-    doneBy?: string;
-    doneAt?: Date;
-    order: number;
-  };
+  task: TaskWithStatus;
   readOnly?: boolean;
 }
 
@@ -45,31 +35,33 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(task.name);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  
+
+  const isDone = !task.is_available;
+
   const handleToggleStatus = () => {
     toggleTaskStatus(task.id);
   };
-  
+
   const handleUpdateTask = () => {
     if (editedName.trim()) {
       updateTask(task.id, { name: editedName });
       setIsEditing(false);
     }
   };
-  
+
   const handleDeleteTask = () => {
     deleteTask(task.id);
     setIsDeleteDialogOpen(false);
   };
-  
-  const formatDate = (date: Date) => {
-    return format(date, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+
+  const formatDate = (isoDate: string) => {
+    return format(new Date(isoDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
   };
-  
+
   return (
     <div className="flex items-start gap-3 p-3 border rounded-lg bg-card hover:bg-accent/5 transition-colors">
       <Checkbox
-        checked={task.done}
+        checked={isDone}
         onCheckedChange={handleToggleStatus}
         className="mt-0.5"
       />
@@ -88,10 +80,10 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
           </div>
         ) : (
           <>
-            <span 
+            <span
               className={cn(
                 "block text-sm leading-5",
-                task.done && "line-through text-muted-foreground"
+                isDone && "line-through text-muted-foreground"
               )}
             >
               {task.name}
@@ -101,16 +93,15 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
                 {task.description}
               </p>
             )}
-            {task.done && task.doneAt && (
+            {isDone && task.last_execution && (
               <p className="text-xs text-muted-foreground mt-1">
-                Concluída em: {formatDate(task.doneAt)}
-                {task.doneBy && <span> por {task.doneBy}</span>}
+                Concluída em: {formatDate(task.last_execution.executed_at)} por {task.name}
               </p>
             )}
           </>
         )}
       </div>
-      
+
       {!readOnly && !isEditing && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -123,7 +114,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
               <Pencil className="h-4 w-4 mr-2" />
               Editar
             </DropdownMenuItem>
-            <DropdownMenuItem 
+            <DropdownMenuItem
               onClick={() => setIsDeleteDialogOpen(true)}
               className="text-destructive focus:text-destructive"
             >
@@ -133,7 +124,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
           </DropdownMenuContent>
         </DropdownMenu>
       )}
-      
+
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

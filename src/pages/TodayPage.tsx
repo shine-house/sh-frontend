@@ -8,16 +8,14 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Timer, Pause, Play, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTask } from "@/context/TaskContext";
+
 const TodayPage = () => {
   const [timerActive, setTimerActive] = useState(false);
   const [timerPaused, setTimerPaused] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(15 * 60); // 15 minutes in seconds
-  const {
-    toast
-  } = useToast();
-  const {
-    currentZone
-  } = useTask();
+  const { toast } = useToast();
+  const { activeZone, isLoading } = useTask();
+
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (timerActive && !timerPaused) {
@@ -39,6 +37,7 @@ const TodayPage = () => {
     }
     return () => clearInterval(interval);
   }, [timerActive, timerPaused, toast]);
+
   const startTimer = () => {
     setTimerActive(true);
     setTimerPaused(false);
@@ -48,6 +47,7 @@ const TodayPage = () => {
       duration: 3000
     });
   };
+
   const pauseTimer = () => {
     setTimerPaused(!timerPaused);
     toast({
@@ -55,36 +55,45 @@ const TodayPage = () => {
       duration: 2000
     });
   };
+
   const resetTimer = () => {
     setTimerActive(false);
     setTimerPaused(false);
     setTimeRemaining(15 * 60);
   };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
-  return <div className="flex flex-col min-h-screen">
+
+  return (
+    <div className="flex flex-col min-h-screen">
       <AppHeader title="Hoje" />
-      
+
       <main className="flex-1 container max-w-4xl p-4 space-y-6 mb-16">
         <GuestModeNotice />
-        
-        {currentZone && <Alert className="bg-shine-teal/20 border-shine-teal">
+
+        {activeZone && (
+          <Alert className="bg-shine-teal/20 border-shine-teal">
             <Calendar className="h-4 w-4 text-shine-teal" />
             <AlertDescription className="flex justify-between items-center">
               <div>
-                <span className="font-medium">Zona da semana: {currentZone.name}</span>
+                <span className="font-medium">Zona da semana: {activeZone.room_name}</span>
               </div>
             </AlertDescription>
-          </Alert>}
-        
+          </Alert>
+        )}
+
         <div className="mb-4 py-0 px-0">
-          {!timerActive ? <Button onClick={startTimer} className="shine-gradient flex items-center gap-2">
+          {!timerActive ? (
+            <Button onClick={startTimer} className="shine-gradient flex items-center gap-2">
               <Timer className="h-4 w-4" />
               Iniciar Timer de 15min
-            </Button> : <div className="flex items-center gap-2">
+            </Button>
+          ) : (
+            <div className="flex items-center gap-2">
               <div className="text-xl font-bold mr-2">
                 {formatTime(timeRemaining)}
               </div>
@@ -95,23 +104,35 @@ const TodayPage = () => {
               <Button onClick={resetTimer} variant="outline" size="sm">
                 Cancelar
               </Button>
-            </div>}
+            </div>
+          )}
         </div>
-        
+
+        {/* Daily and weekly tasks are recurrence-driven, independent of the
+            active zone — they must always render, regardless of room/cycle. */}
         <section>
           <TaskList type="daily" title="Tarefas Diárias" readOnly={true} />
         </section>
-        
+
         <section className="pt-4">
           <TaskList type="weekly" title="Tarefas Semanais" readOnly={true} />
         </section>
-        
-        {currentZone && <section className="pt-4">
-            <TaskList type="zone" roomId={currentZone.id} title={`Tarefas da Zona: ${currentZone.name}`} readOnly={true} />
-          </section>}
+
+        {!isLoading && activeZone && (
+          <section className="pt-4">
+            <TaskList
+              type="zone"
+              roomId={activeZone.room_id}
+              title={`Tarefas da Zona: ${activeZone.room_name}`}
+              readOnly={true}
+            />
+          </section>
+        )}
       </main>
-      
+
       <AppFooter />
-    </div>;
+    </div>
+  );
 };
+
 export default TodayPage;

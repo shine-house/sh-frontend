@@ -94,7 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const data = await signUp(email, password, name);
 
       console.log("Registro concluído:", data);
-      toast.success(data.message || "Email de confirmação enviado! Verifique sua caixa de entrada.", {
+      toast.success("Email de confirmação enviado! Verifique sua caixa de entrada.", {
         duration: 5000,
       });
 

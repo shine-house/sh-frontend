@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useHousehold } from "@/hooks/useHousehold";
 import {
   Dialog,
   DialogContent,
@@ -16,7 +17,6 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import * as householdsApi from "@/lib/api/households";
-import type { MemberResponse } from "@/lib/api/types/user-types";
 import type { PendingMemberResponse } from "@/lib/api/households";
 
 interface SharingDialogProps {
@@ -32,9 +32,10 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
   onOpenChange
 }) => {
   const { user, isAuthenticated, activeHouseholdId } = useAuth();
+  const { members, refetchMembers } = useHousehold();
 
   const [inviteCode, setInviteCode] = useState<string | null>(null);
-  const [members, setMembers] = useState<MemberResponse[]>([]);
+  // const [members, setMembers] = useState<MemberResponse[]>([]);
   const [pendingMembers, setPendingMembers] = useState<PendingMemberResponse[]>([]);
   const [joinCode, setJoinCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -44,14 +45,13 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
   const loadHouseholdData = useCallback(async () => {
     if (!activeHouseholdId) return;
     try {
-      const [inviteRes, membersRes, pendingRes] = await Promise.all([
+      const [inviteRes, pendingRes] = await Promise.all([
         householdsApi.getInviteCode(activeHouseholdId),
-        householdsApi.listMembers(activeHouseholdId),
         householdsApi.listPendingMembers(activeHouseholdId),
       ]);
       setInviteCode(inviteRes.invite_code);
-      setMembers(membersRes.members);
       setPendingMembers(pendingRes.items);
+      await refetchMembers();
     } catch (err) {
       console.error("Erro ao carregar dados da residência:", err);
     }
@@ -166,7 +166,7 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
 
     try {
       await householdsApi.removeMember(activeHouseholdId, userId);
-      setMembers((prev) => prev.filter((m) => m.user_id !== userId));
+      await refetchMembers();
       toast.success("Usuário removido com sucesso");
     } catch (err) {
       console.error("Erro ao remover usuário:", err);

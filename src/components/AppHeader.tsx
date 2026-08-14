@@ -6,7 +6,6 @@ import SharingDialog from "./SharingDialog";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { House, User, LogOut, Share2, Bell, Menu, UserPlus, ArrowLeft, InfoIcon } from "lucide-react";
-import { useTask } from "@/context/TaskContext";
 import { toast } from "sonner";
 import { 
   Tooltip,
@@ -14,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useHousehold } from "@/hooks/useHousehold";
 
 interface AppHeaderProps {
   title: string;
@@ -31,10 +31,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     isAuthenticated,
     logout
   } = useAuth();
-  const {
-    isSharingEnabled
-  } = useTask();
+  
   const [isSharingDialogOpen, setIsSharingDialogOpen] = useState(false);
+  const { isShared } = useHousehold();
   
   const handleLogout = () => {
     logout();
@@ -67,8 +66,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                   variant="ghost" 
                   size="icon" 
                   onClick={() => setIsSharingDialogOpen(true)} 
-                  className={isSharingEnabled ? "text-shine-teal" : ""}
-                >
+                  className={isShared ? "text-shine-teal" : ""}
+                  >
                   <Share2 className="h-5 w-5" />
                 </Button>
               </TooltipTrigger>
@@ -77,7 +76,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">

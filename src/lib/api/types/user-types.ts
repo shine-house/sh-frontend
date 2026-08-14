@@ -55,6 +55,8 @@ export interface LoginResponse extends AuthMeResponse {
 
 export interface MemberResponse{
   user_id: UUID;
+  name: string;
+  // TODO: include Name
   household_id: UUID;
   role: RoleEnum;
   joined_at: string;
