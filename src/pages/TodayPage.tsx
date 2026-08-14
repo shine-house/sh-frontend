@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import AppHeader from "@/components/AppHeader";
 import AppFooter from "@/components/AppFooter";
 import TaskList from "@/components/TaskList";
@@ -12,7 +12,7 @@ import { useTask } from "@/context/TaskContext";
 const TodayPage = () => {
   const [timerActive, setTimerActive] = useState(false);
   const [timerPaused, setTimerPaused] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(15 * 60); // 15 minutes in seconds
+  const [timeRemaining, setTimeRemaining] = useState(15 * 60);
   const { toast } = useToast();
   const { activeZone, isLoading } = useTask();
 
@@ -72,7 +72,8 @@ const TodayPage = () => {
     <div className="flex flex-col min-h-screen">
       <AppHeader title="Hoje" />
 
-      <main className="flex-1 container max-w-4xl p-4 space-y-6 mb-16">
+      {/* <main className="flex-1 container max-w-4xl p-4 space-y-6 mb-16"> */}
+      <main className="mx-auto w-full max-w-4xl flex-1 p-4 space-y-6 mb-16">
         <GuestModeNotice />
 
         {activeZone && (

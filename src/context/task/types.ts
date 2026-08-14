@@ -1,4 +1,4 @@
-import type { RoomResponse } from "../room-types";
+import type { RoomResponse, UpdateRoomRequest } from "../room-types";
 import type { TaskWithStatus, TaskCreate, TaskUpdate } from "../../lib/api/types/task-types";
 import type { TaskTypeEnum } from "../../lib/api/types/util-types";
 import type { ActiveZoneResponse } from "@/lib/api/types/zone-types";
@@ -9,7 +9,9 @@ export type TaskContextType = {
   activeZone: ActiveZoneResponse | null;
   isLoading: boolean;
   addRoom: (name: string) => Promise<void>;
+  editRoom: (id: string, data: UpdateRoomRequest) => Promise<void>;
   removeRoom: (id: string) => Promise<void>;
+  reorderRooms: (roomIds: string[]) => Promise<void>;
   addTask: (task: TaskCreate) => Promise<void>;
   toggleTaskStatus: (id: string) => Promise<void>;
   editTask: (id: string, data: TaskUpdate) => Promise<void>;

@@ -46,7 +46,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   };
   
   return <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b py-3 px-4">
-      <div className="flex items-center justify-between px-[12px]">
+      <div className=" max-w-4xl mx-auto flex items-center justify-between px-[12px]">
+        
         <div className="flex items-center gap-3">
           {showBackButton && onBack && <Button variant="ghost" size="icon" onClick={onBack}>
               <ArrowLeft className="h-5 w-5" />

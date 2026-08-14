@@ -69,6 +69,28 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+    const reorderRooms = async (roomIds: string[]) => {
+    try {
+      const result = await roomsApi.reorderRooms({ room_ids: roomIds });
+      setRooms(result.items);
+      const zoneRes = await roomsApi.getActiveZone().catch(() => null);
+      setActiveZone(zoneRes);
+    } catch (error) {
+      console.error("Erro ao reordenar cômodos:", error);
+      toast.error("Erro ao reordenar cômodos");
+    }
+  };
+
+  const editRoom = async (id: string, data: Parameters<typeof roomsApi.updateRoom>[1]) => {
+    try {
+      const updated = await roomsApi.updateRoom(id, data);
+      setRooms((prev) => prev.map((r) => (r.id === id ? updated : r)));
+    } catch (error) {
+      console.error("Erro ao editar cômodo:", error);
+      toast.error("Erro ao editar cômodo");
+    }
+  };
+
   const removeRoom = async (id: string) => {
     try {
       await roomsApi.deleteRoom(id);
@@ -166,7 +188,9 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         tasks,
         activeZone,
         isLoading,
+        reorderRooms,
         addRoom,
+        editRoom,
         removeRoom,
         addTask,
         toggleTaskStatus,
