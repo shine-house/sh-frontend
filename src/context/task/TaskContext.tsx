@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import * as roomsApi from "@/lib/api/rooms";
-import * as tasksApi from "@/lib/api/tasks";
-import type { RoomResponse } from "../room-types";
+import { createTasksApi } from "@/lib/api/tasks";
+import { createRoomsApi } from "@/lib/api/rooms";
+
+import type { RoomResponse, UpdateRoomRequest } from "../room-types";
 import type { TaskCreate, TaskUpdate, TaskWithStatus } from "../../lib/api/types/task-types";
 import type { TaskTypeEnum } from "../../lib/api/types/util-types";
 import type { ActiveZoneResponse } from "@/lib/api/types/zone-types";
@@ -21,7 +22,16 @@ export const useTask = () => {
 };
 
 export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, activeHouseholdId, isLoading: authLoading } = useAuth();
+
+  const tasksApi = useMemo(
+    () => (activeHouseholdId ? createTasksApi(activeHouseholdId) : null),
+    [activeHouseholdId]
+  );
+  const roomsApi = useMemo(
+    () => (activeHouseholdId ? createRoomsApi(activeHouseholdId) : null),
+    [activeHouseholdId]
+  );
 
   const [rooms, setRooms] = useState<RoomResponse[]>([]);
   const [tasks, setTasks] = useState<TaskWithStatus[]>([]);
@@ -29,6 +39,10 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const fetchAll = useCallback(async () => {
+    if (!roomsApi || !tasksApi) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const [roomsRes, tasksRes, zoneRes] = await Promise.all([
@@ -45,11 +59,11 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [roomsApi, tasksApi]);
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) {
+    if (!user || !activeHouseholdId) {
       setRooms([]);
       setTasks([]);
       setActiveZone(null);
@@ -57,9 +71,10 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     fetchAll();
-  }, [user, authLoading, fetchAll]);
+  }, [user, activeHouseholdId, authLoading, fetchAll]);
 
   const addRoom = async (name: string) => {
+    if (!roomsApi) return;
     try {
       const room = await roomsApi.createRoom({ name });
       setRooms((prev) => [...prev, room]);
@@ -69,7 +84,8 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-    const reorderRooms = async (roomIds: string[]) => {
+  const reorderRooms = async (roomIds: string[]) => {
+    if (!roomsApi) return;
     try {
       const result = await roomsApi.reorderRooms({ room_ids: roomIds });
       setRooms(result.items);
@@ -81,7 +97,8 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const editRoom = async (id: string, data: Parameters<typeof roomsApi.updateRoom>[1]) => {
+  const editRoom = async (id: string, data: UpdateRoomRequest) => {
+    if (!roomsApi) return;
     try {
       const updated = await roomsApi.updateRoom(id, data);
       setRooms((prev) => prev.map((r) => (r.id === id ? updated : r)));
@@ -92,6 +109,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const removeRoom = async (id: string) => {
+    if (!roomsApi) return;
     try {
       await roomsApi.deleteRoom(id);
       setRooms((prev) => prev.filter((r) => r.id !== id));
@@ -103,6 +121,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addTask = async (data: TaskCreate) => {
+    if (!tasksApi) return;
     try {
       const task = await tasksApi.createTask(data);
       setTasks((prev) => [...prev, task]);
@@ -113,6 +132,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const editTask = async (id: string, data: TaskUpdate) => {
+    if (!tasksApi) return;
     try {
       const updated = await tasksApi.updateTask(id, data);
       setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)));
@@ -123,6 +143,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const removeTask = async (id: string) => {
+    if (!tasksApi) return;
     try {
       await tasksApi.deleteTask(id);
       setTasks((prev) => prev.filter((t) => t.id !== id));
@@ -133,6 +154,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const toggleTaskStatus = async (id: string) => {
+    if (!tasksApi) return;
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
     try {
@@ -155,31 +177,37 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const filterTasks = (roomId?: string, type?: TaskTypeEnum): TaskWithStatus[] => {
-    return tasks
-      .filter((t) => (roomId ? t.room_id === roomId : true) && (type ? t.type === type : true))
-      .sort((a, b) => a.sort_order - b.sort_order);
-  };
+  const filterTasks = useCallback(
+    (roomId?: string, type?: TaskTypeEnum): TaskWithStatus[] => {
+      return tasks
+        .filter((t) => (roomId ? t.room_id === roomId : true) && (type ? t.type === type : true))
+        .sort((a, b) => a.sort_order - b.sort_order);
+    },
+    [tasks]
+  );
 
   // Client-side preview only — not an authorization/visibility decision.
   // The authoritative active zone is `activeZone`, fetched from the backend.
-  const getZoneCalendar = (weeks: number) => {
-    const calendar: Array<{ date: Date; roomId: string | null }> = [];
-    if (!activeZone || rooms.length === 0) return calendar;
+  const getZoneCalendar = useCallback(
+    (weeks: number) => {
+      const calendar: Array<{ date: Date; roomId: string | null }> = [];
+      if (!activeZone || rooms.length === 0) return calendar;
 
-    const cycleLength = activeZone.cycle_length;
-    let date = getStartOfWeek(new Date(activeZone.period_start_date));
-    let position = activeZone.cycle_position;
+      const cycleLength = activeZone.cycle_length;
+      let date = getStartOfWeek(new Date(activeZone.period_start_date));
+      let position = activeZone.cycle_position;
 
-    for (let i = 0; i < weeks; i++) {
-      const room = rooms.find((r) => r.zone_cycle_position === position) ?? null;
-      calendar.push({ date: new Date(date), roomId: room?.id ?? null });
-      date = addDays(date, 7);
-      position = (position % cycleLength) + 1;
-    }
+      for (let i = 0; i < weeks; i++) {
+        const room = rooms.find((r) => r.zone_cycle_position === position) ?? null;
+        calendar.push({ date: new Date(date), roomId: room?.id ?? null });
+        date = addDays(date, 7);
+        position = (position % cycleLength) + 1;
+      }
 
-    return calendar;
-  };
+      return calendar;
+    },
+    [activeZone, rooms]
+  );
 
   return (
     <TaskContext.Provider
