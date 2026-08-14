@@ -1,5 +1,6 @@
 import { apiClient, tokenStorage } from "./client";
 import type { UserResponse, AuthMeResponse, LoginResponse} from "./types/user-types";
+import type { InfoMessage } from "./types/util-types";
 
 
 export const signIn = async (email: string, password: string) => {
@@ -26,4 +27,29 @@ export const getCurrentUser = async (): Promise<AuthMeResponse | null> => {
   } catch {
     return null;
   }
+};
+
+export const forgotPassword = async (email:string): Promise< InfoMessage> => {
+
+  return await apiClient.post<InfoMessage>("/auth/forgot-password", {
+    email
+  });
+
+};
+
+export const resetPassword = async (
+  token: string,
+  newPassword: string,
+  confirmPassword: string,
+): Promise<InfoMessage> => {
+  const data  = await apiClient.post<InfoMessage>(
+    "/auth/reset-password",
+    {
+      token,
+      new_password: newPassword,
+      confirm_password: confirmPassword,
+    },
+  );
+
+  return data;
 };
