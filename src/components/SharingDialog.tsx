@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { useTask } from "@/context/AuthContext";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
   DialogTitle,
   DialogDescription
 } from "@/components/ui/dialog";
@@ -16,182 +15,175 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-// TODO: Remove supabase
-import { getPendingApprovals, approveShareRequest, rejectShareRequest } from "@/lib/supabase";
+import * as householdsApi from "@/lib/api/households";
+import type { MemberResponse } from "@/lib/api/types/user-types";
+import type { PendingMemberResponse } from "@/lib/api/households";
 
 interface SharingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const SharingDialog: React.FC<SharingDialogProps> = ({ 
-  open, 
-  onOpenChange 
+const getErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : "Erro desconhecido";
+
+const SharingDialog: React.FC<SharingDialogProps> = ({
+  open,
+  onOpenChange
 }) => {
-  const { user, isAuthenticated } = useAuth();
-  const { 
-    sharingKey, 
-    isSharingEnabled, 
-    enableSharing, 
-    disableSharing, 
-    loadSharedTasks,
-    connectedUsers,
-    removeConnectedUser
-  } = useTask();
-  
+  const { user, isAuthenticated, activeHouseholdId } = useAuth();
+
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [members, setMembers] = useState<MemberResponse[]>([]);
+  const [pendingMembers, setPendingMembers] = useState<PendingMemberResponse[]>([]);
   const [joinCode, setJoinCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
-  const [approvingUser, setApprovingUser] = useState<string | null>(null);
-  
+  const [approvingUserId, setApprovingUserId] = useState<string | null>(null);
+
+  const loadHouseholdData = useCallback(async () => {
+    if (!activeHouseholdId) return;
+    try {
+      const [inviteRes, membersRes, pendingRes] = await Promise.all([
+        householdsApi.getInviteCode(activeHouseholdId),
+        householdsApi.listMembers(activeHouseholdId),
+        householdsApi.listPendingMembers(activeHouseholdId),
+      ]);
+      setInviteCode(inviteRes.invite_code);
+      setMembers(membersRes.members);
+      setPendingMembers(pendingRes.items);
+    } catch (err) {
+      console.error("Erro ao carregar dados da residência:", err);
+    }
+  }, [activeHouseholdId]);
+
   useEffect(() => {
     if (open) {
       setJoinCode("");
       setError(null);
-      loadPendingApprovals();
+      loadHouseholdData();
     }
-  }, [open]);
+  }, [open, loadHouseholdData]);
 
-  // Polling para atualizar solicitações pendentes
+  // Poll for pending join requests while the dialog is open
   useEffect(() => {
-    if (open && isSharingEnabled && sharingKey) {
-      const interval = setInterval(loadPendingApprovals, 5000);
+    if (open && activeHouseholdId) {
+      const interval = setInterval(loadHouseholdData, 5000);
       return () => clearInterval(interval);
     }
-  }, [open, isSharingEnabled, sharingKey]);
-
-  const loadPendingApprovals = async () => {
-    if (!sharingKey || !isSharingEnabled) return;
-    
-    try {
-      const pending = await getPendingApprovals(sharingKey);
-      setPendingApprovals(pending);
-    } catch (err) {
-      console.error("Erro ao carregar solicitações pendentes:", err);
-    }
-  };
+  }, [open, activeHouseholdId, loadHouseholdData]);
 
   const handleApproveUser = async (userId: string) => {
-    if (!sharingKey) return;
-    
-    setApprovingUser(userId);
+    if (!activeHouseholdId) return;
+    setApprovingUserId(userId);
     try {
-      const success = await approveShareRequest(sharingKey, userId);
-      if (success) {
-        toast.success("Usuário aprovado com sucesso!");
-        await loadPendingApprovals();
-      } else {
-        toast.error("Erro ao aprovar usuário");
-      }
+      await householdsApi.approvePendingMember(activeHouseholdId, userId);
+      toast.success("Usuário aprovado com sucesso!");
+      await loadHouseholdData();
     } catch (err) {
       console.error("Erro ao aprovar usuário:", err);
       toast.error("Erro ao aprovar usuário");
     } finally {
-      setApprovingUser(null);
+      setApprovingUserId(null);
     }
   };
 
   const handleRejectUser = async (userId: string) => {
-    if (!sharingKey) return;
-    
-    setApprovingUser(userId);
+    if (!activeHouseholdId) return;
+    setApprovingUserId(userId);
     try {
-      const success = await rejectShareRequest(sharingKey, userId);
-      if (success) {
-        toast.success("Solicitação rejeitada");
-        await loadPendingApprovals();
-      } else {
-        toast.error("Erro ao rejeitar solicitação");
-      }
+      await householdsApi.rejectPendingMember(activeHouseholdId, userId);
+      toast.success("Solicitação rejeitada");
+      await loadHouseholdData();
     } catch (err) {
       console.error("Erro ao rejeitar usuário:", err);
       toast.error("Erro ao rejeitar solicitação");
     } finally {
-      setApprovingUser(null);
+      setApprovingUserId(null);
     }
   };
-  
+
   const handleCopyCode = () => {
-    if (sharingKey) {
-      navigator.clipboard.writeText(sharingKey);
+    if (inviteCode) {
+      navigator.clipboard.writeText(inviteCode);
       toast.success("Código copiado para a área de transferência!");
     }
   };
-  
-  const handleJoinSharedList = async () => {
+
+  const handleRegenerateCode = async () => {
+    if (!activeHouseholdId) return;
+    setIsLoading(true);
+    try {
+      const res = await householdsApi.regenerateInviteCode(activeHouseholdId);
+      setInviteCode(res.invite_code);
+      toast.success("Novo código gerado!");
+    } catch (err) {
+      console.error("Erro ao gerar novo código:", err);
+      toast.error("Erro ao gerar novo código");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleJoinHousehold = async () => {
     if (!joinCode.trim()) {
-      setError("Digite um código de compartilhamento");
+      setError("Digite um código de convite");
       return;
     }
-    
-    if (sharingKey && joinCode.trim() === sharingKey) {
-      setError("Você não pode entrar na sua própria lista");
+
+    if (inviteCode && joinCode.trim() === inviteCode) {
+      setError("Você não pode entrar na sua própria residência");
       return;
     }
-    
+
     if (!isAuthenticated) {
-      setError("Você precisa estar logado para entrar em uma lista compartilhada");
+      setError("Você precisa estar logado para entrar em uma residência compartilhada");
       return;
     }
-    
+
     setError(null);
     setIsLoading(true);
-    
+
     try {
-      const success = await loadSharedTasks(joinCode);
-      if (success) {
-        toast.success("Solicitação enviada! Aguarde a aprovação do dono da lista.");
-        onOpenChange(false);
+      const result = await householdsApi.joinHouseholdByInviteCode(joinCode.trim());
+      if (result.status === "pending") {
+        toast.success("Solicitação enviada! Aguarde a aprovação do dono da residência.");
       } else {
-        setError("Código de compartilhamento inválido ou expirado");
+        toast.success("Você entrou na residência compartilhada!");
       }
-    } catch (err: any) {
-      console.error("Erro ao carregar lista:", err);
-      const errorMessage = err.message || 'Erro desconhecido';
-      setError(`Não foi possível entrar na lista compartilhada: ${errorMessage}`);
+      onOpenChange(false);
+    } catch (err) {
+      console.error("Erro ao entrar na residência:", err);
+      setError(`Não foi possível entrar: ${getErrorMessage(err)}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleRemoveUser = (userId: string) => {
-    if (confirm("Tem certeza que deseja remover este usuário?")) {
-      removeConnectedUser(userId);
-    }
-  };
+  const handleRemoveMember = async (userId: string) => {
+    if (!activeHouseholdId) return;
+    if (!confirm("Tem certeza que deseja remover este usuário?")) return;
 
-  const handleEnableSharing = async () => {
-    if (!isAuthenticated) {
-      setError("Você precisa estar logado para compartilhar sua lista");
-      return;
-    }
-    
-    setIsLoading(true);
-    setError(null);
-    
     try {
-      await enableSharing();
-      toast.success("Compartilhamento ativado com sucesso!");
-    } catch (err: any) {
-      console.error("Erro ao ativar compartilhamento:", err);
-      const errorMessage = err.message || 'Erro desconhecido';
-      setError(`Não foi possível ativar o compartilhamento: ${errorMessage}`);
-    } finally {
-      setIsLoading(false);
+      await householdsApi.removeMember(activeHouseholdId, userId);
+      setMembers((prev) => prev.filter((m) => m.user_id !== userId));
+      toast.success("Usuário removido com sucesso");
+    } catch (err) {
+      console.error("Erro ao remover usuário:", err);
+      toast.error("Erro ao remover usuário");
     }
   };
-  
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Compartilhamento</DialogTitle>
           <DialogDescription>
-            Compartilhe sua lista de tarefas com outras pessoas
+            Compartilhe sua residência com outras pessoas
           </DialogDescription>
         </DialogHeader>
-        
+
         {!isAuthenticated && (
           <Alert className="mb-4" variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -201,156 +193,135 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
             </AlertDescription>
           </Alert>
         )}
-        
-        <Tabs defaultValue={isSharingEnabled ? "my-list" : "join"}>
+
+        <Tabs defaultValue="my-household">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="my-list">Minha Lista</TabsTrigger>
+            <TabsTrigger value="my-household">Minha Residência</TabsTrigger>
             <TabsTrigger value="join">Entrar</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="my-list" className="space-y-4 pt-4">
+
+          <TabsContent value="my-household" className="space-y-4 pt-4">
             {error && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            
-            {isSharingEnabled ? (
-              <>
-                <p className="text-sm">
-                  Sua lista está sendo compartilhada. Compartilhe o código abaixo com até 3 pessoas:
-                </p>
-                
-                <div className="flex space-x-2">
-                  <Input value={sharingKey || ""} readOnly />
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    onClick={handleCopyCode}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
+
+            <p className="text-sm">
+              Compartilhe o código abaixo para convidar outras pessoas para sua residência:
+            </p>
+
+            <div className="flex space-x-2">
+              <Input value={inviteCode || ""} readOnly />
+              <Button size="icon" variant="outline" onClick={handleCopyCode} disabled={!inviteCode}>
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRegenerateCode}
+              disabled={isLoading}
+            >
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Gerar novo código
+            </Button>
+
+            {pendingMembers.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-orange-500" />
+                  <p className="text-sm font-medium">Solicitações pendentes</p>
                 </div>
-
-                {pendingApprovals && pendingApprovals.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4 text-orange-500" />
-                      <p className="text-sm font-medium">Solicitações pendentes</p>
-                    </div>
-                    <Separator />
-                    <div className="space-y-2">
-                      {pendingApprovals.map((approval) => (
-                        <div key={approval.user_id} className="flex justify-between items-center p-2 bg-muted/50 rounded">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="bg-orange-50">
-                              {approval.name}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">aguardando aprovação</span>
-                          </div>
-                          <div className="flex gap-1">
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 text-green-600 hover:text-green-700"
-                              onClick={() => handleApproveUser(approval.user_id)}
-                              disabled={approvingUser === approval.user_id}
-                            >
-                              {approvingUser === approval.user_id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <UserCheck className="h-4 w-4" />
-                              )}
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 text-red-600 hover:text-red-700"
-                              onClick={() => handleRejectUser(approval.user_id)}
-                              disabled={approvingUser === approval.user_id}
-                            >
-                              <UserX className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {connectedUsers && connectedUsers.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <p className="text-sm font-medium">Pessoas conectadas</p>
-                    </div>
-                    <Separator />
-                    <div className="space-y-2">
-                      {connectedUsers.map((connectedUser) => (
-                        <div key={connectedUser.id} className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="bg-shine-teal/10">
-                              {connectedUser.name}
-                            </Badge>
-                            {connectedUser.id === user?.id && (
-                              <span className="text-xs text-muted-foreground">(Você)</span>
-                            )}
-                            {connectedUser.isOwner && (
-                              <span className="text-xs text-muted-foreground">(Dono)</span>
-                            )}
-                          </div>
-                          {!connectedUser.isOwner && (
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 text-destructive"
-                              onClick={() => handleRemoveUser(connectedUser.id)}
-                            >
-                              <Trash className="h-4 w-4" />
-                            </Button>
+                <Separator />
+                <div className="space-y-2">
+                  {pendingMembers.map((pending) => (
+                    <div key={pending.user_id} className="flex justify-between items-center p-2 bg-muted/50 rounded">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="bg-orange-50">
+                          {pending.name}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">aguardando aprovação</span>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-green-600 hover:text-green-700"
+                          onClick={() => handleApproveUser(pending.user_id)}
+                          disabled={approvingUserId === pending.user_id}
+                        >
+                          {approvingUserId === pending.user_id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <UserCheck className="h-4 w-4" />
                           )}
-                        </div>
-                      ))}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-600 hover:text-red-700"
+                          onClick={() => handleRejectUser(pending.user_id)}
+                          disabled={approvingUserId === pending.user_id}
+                        >
+                          <UserX className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full" 
-                  onClick={disableSharing}
-                >
-                  Desativar Compartilhamento
-                </Button>
-              </>
-            ) : (
-              <>
-                <p className="text-sm">
-                  Compartilhe sua lista de tarefas com até 3 pessoas. Cada vez que alguém marca uma tarefa como concluída, isso será refletido para todos.
-                </p>
-                
-                <Button 
-                  className="w-full shine-gradient" 
-                  onClick={handleEnableSharing}
-                  disabled={isLoading || !isAuthenticated}
-                >
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Ativar Compartilhamento
-                </Button>
-                
-                {isAuthenticated && (
-                  <Alert className="mt-2">
-                    <Info className="h-4 w-4" />
-                    <AlertDescription className="text-xs">
-                      Este processo pode levar alguns instantes na primeira vez, enquanto preparamos seu ambiente de compartilhamento.
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {members.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <p className="text-sm font-medium">Pessoas conectadas</p>
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  {members.map((member) => (
+                    <div key={member.user_id} className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="bg-shine-teal/10">
+                          {member.user_id === user?.id ? user?.name ?? "Você" : member.user_id}
+                        </Badge>
+                        {member.user_id === user?.id && (
+                          <span className="text-xs text-muted-foreground">(Você)</span>
+                        )}
+                        {member.role === "owner" && (
+                          <span className="text-xs text-muted-foreground">(Dono)</span>
+                        )}
+                      </div>
+                      {member.role !== "owner" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive"
+                          onClick={() => handleRemoveMember(member.user_id)}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {isAuthenticated && (
+              <Alert className="mt-2">
+                <Info className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  Cada vez que alguém marca uma tarefa como concluída, isso será refletido para todos na residência.
+                </AlertDescription>
+              </Alert>
             )}
           </TabsContent>
-          
+
           <TabsContent value="join" className="space-y-4 pt-4">
             {error && (
               <Alert variant="destructive">
@@ -358,24 +329,24 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            
+
             <p className="text-sm">
-              Digite o código de compartilhamento que você recebeu:
+              Digite o código de convite que você recebeu:
             </p>
-            
+
             <Input
               value={joinCode}
               onChange={(e) => setJoinCode(e.target.value)}
               placeholder="Ex: shine-abc123"
             />
-            
-            <Button 
-              className="w-full shine-gradient" 
-              onClick={handleJoinSharedList}
+
+            <Button
+              className="w-full shine-gradient"
+              onClick={handleJoinHousehold}
               disabled={isLoading || !isAuthenticated}
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Entrar na Lista Compartilhada
+              Entrar na Residência
             </Button>
           </TabsContent>
         </Tabs>

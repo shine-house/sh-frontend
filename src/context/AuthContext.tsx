@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 type AuthContextType = {
   user: UserResponse | null;
+  activeHouseholdId: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -29,41 +30,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children 
 }) => {
   const [user, setUser] = useState<UserResponse | null>(null);
+  const [activeHouseholdId, setActiveHouseholdId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Initial auth check: validate any stored token against the backend
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        const currentUser = await getCurrentUser();
-        console.log("Sessão verificada:", currentUser);
-        setUser(currentUser);
-      } catch (error) {
-        console.error("Erro ao verificar sessão:", error);
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      const initAuth = async () => {
+        try {
+          const session = await getCurrentUser();
+          setUser(session?.user ?? null);
+          setActiveHouseholdId(session?.active_household_id ?? null);
+        } catch (error) {
+          console.error("Erro ao verificar sessão:", error);
+          setUser(null);
+          setActiveHouseholdId(null);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      initAuth();
+    }, []);
 
-    initAuth();
-  }, []);
-
-  const login = async (email: string, password: string) => {
+ const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      console.log("Tentando fazer login:", email);
-      const { user: authUser } = await signIn(email, password);
-      
+      // TODO: verificar retorno
+      const { user: authUser, active_household_id } = await signIn(email, password);
       if (!authUser) {
         throw new Error("Falha na autenticação. Tente novamente.");
       }
-      
-            console.log("Login bem-sucedido:", authUser);
       setUser(authUser);
+      setActiveHouseholdId(active_household_id);
       toast.success(`Bem-vindo, ${authUser.name || authUser.email.split('@')[0]}!`);
-
-    } catch (error: any) {
+    } catch (error) {
       console.error("Erro no login:", error);
       throw error;
     } finally {
@@ -118,17 +117,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  return (
+return (
     <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        isLoading,
-        login,
-        // loginWithGoogle,
-        register,
-        logout
-      }}
+      value={
+        { user, 
+          activeHouseholdId, 
+          isAuthenticated: !!user, 
+          isLoading, 
+          login, 
+          register, 
+          logout }}
     >
       {children}
     </AuthContext.Provider>

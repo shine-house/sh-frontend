@@ -1,11 +1,11 @@
 import { apiClient, tokenStorage } from "./client";
-import type { UserResponse, AuthMeResponse, LoginResponse} from "./types/user";
+import type { UserResponse, AuthMeResponse, LoginResponse} from "./types/user-types";
 
 
 export const signIn = async (email: string, password: string) => {
   const data = await apiClient.post<LoginResponse>("/auth/login", { email, password });
   tokenStorage.set(data.access_token);
-  return { user: data.user };
+  return { user: data.user, active_household_id: data.active_household_id };
 };
 
 export const signUp = async (email: string, password: string, name: string) => {
