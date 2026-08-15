@@ -5,8 +5,7 @@ import type {
   CreateRoomRequest,
   UpdateRoomRequest,
   RoomReorderRequest,
-} from "@/context/room-types";
-import type { ActiveZoneResponse } from "@/lib/api/types/zone-types";
+} from "@/lib/api/types/room-types";
 
 export const createRoomsApi = (householdId: string) => {
   const basePath = `/households/${householdId}/rooms`;
@@ -17,8 +16,11 @@ export const createRoomsApi = (householdId: string) => {
     createRoom: (data: CreateRoomRequest) =>
       apiClient.post<RoomResponse>(basePath, data),
 
+    getRoomById: (id: string) =>
+      apiClient.patch<RoomResponse>(`${basePath}/${id}`),
+
     updateRoom: (id: string, data: UpdateRoomRequest) =>
-      apiClient.patch<RoomResponse>(`${basePath}/${id}`, data),
+      apiClient.put<RoomResponse>(`${basePath}/${id}`, data),
 
     deleteRoom: (id: string) =>
       apiClient.delete<void>(`${basePath}/${id}`),
@@ -26,8 +28,6 @@ export const createRoomsApi = (householdId: string) => {
     reorderRooms: (data: RoomReorderRequest) =>
       apiClient.post<ListRoomResponse>(`${basePath}/reorder`, data),
 
-    getActiveZone: () =>
-      apiClient.get<ActiveZoneResponse>(`${basePath}/active-zone`),
   };
 };
 

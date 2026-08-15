@@ -55,7 +55,7 @@ const SettingsPage = () => {
   };
 
   const handleEnableNotifications = () => {
-    // In a real app, this would request notification permissions
+    // TODO: In a real app, this would request notification permissions
     toast.success("Notificações ativadas!");
   };
 
@@ -63,7 +63,6 @@ const SettingsPage = () => {
     <div className="flex flex-col min-h-screen">
       <AppHeader title="Configurações" />
 
-      {/* <main className="flex-1 container max-w-4xl p-4 space-y-4 mb-16"> */}
       <main className="mx-auto w-full max-w-4xl flex-1 p-4 space-y-6 mb-16">
         <section className="space-y-4">
           <h2 className="text-lg font-medium">Conta</h2>

@@ -52,17 +52,3 @@ export interface LoginResponse extends AuthMeResponse {
   refresh_token: string;
   token_type: string;
 }
-
-export interface MemberResponse{
-  user_id: UUID;
-  name: string;
-  // TODO: include Name
-  household_id: UUID;
-  role: RoleEnum;
-  joined_at: string;
-}
-
-export interface ListMemberResponse{
-  members: MemberResponse[];
-  total: number;
-}

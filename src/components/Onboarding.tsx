@@ -18,7 +18,7 @@ const OnboardingSteps = [
           <CheckCircle2 className="h-8 w-8 text-shine-teal" />
           <div>
             <p className="font-medium">Pequenos passos</p>
-            <p className="text-sm text-muted-foreground">Sem necessidade de maratonas de limpeza</p>
+            <p className="text-sm text-muted-foreground">Trabalhe por 15 minutos de cada vez, sem tentar fazer tudo de uma vez. Feito, é melhor que perfeito!</p>
           </div>
         </div>
         <div className="flex items-center gap-3 bg-muted/50 p-3 rounded-lg">
@@ -31,7 +31,7 @@ const OnboardingSteps = [
         <div className="flex items-center gap-3 bg-muted/50 p-3 rounded-lg">
           <Clock className="h-8 w-8 text-shine-teal" />
           <div>
-            <p className="font-medium">Rotinas simples</p>
+            <p className="font-medium">Rotinas simples e customizáveis</p>
             <p className="text-sm text-muted-foreground">Tarefas diárias e semanais consistentes</p>
           </div>
         </div>
@@ -150,7 +150,7 @@ interface OnboardingProps {
 const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const step = OnboardingSteps[currentStep];
-  
+
   const handleNext = () => {
     if (currentStep < OnboardingSteps.length - 1) {
       setCurrentStep(currentStep + 1);
@@ -179,8 +179,8 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           ) : (
             <Button variant="outline" onClick={() => setCurrentStep(currentStep - 1)}>Voltar</Button>
           )}
-          <Button 
-            onClick={handleNext} 
+          <Button
+            onClick={handleNext}
             className="shine-gradient"
           >
             {currentStep === OnboardingSteps.length - 1 ? "Começar" : "Próximo"}

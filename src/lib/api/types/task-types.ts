@@ -48,6 +48,13 @@ export interface ListTaskResponse {
   metadata: MetadataPagination;
 }
 
+export interface TaskQueryParams {
+  roomId?: string;
+  type?: TaskTypeEnum;
+  page?: number;
+  size?: number;
+}
+
 // TODO: create new endpoints to return these infos
 //  refactor the create and update tasks to return this
 export interface TaskWithStatus extends TaskResponse {

@@ -1,4 +1,4 @@
-import type { RoomResponse, UpdateRoomRequest } from "../room-types";
+import type { RoomResponse, UpdateRoomRequest } from "@/lib/api/types/room-types";
 import type { TaskWithStatus, TaskCreate, TaskUpdate } from "../../lib/api/types/task-types";
 import type { TaskTypeEnum } from "../../lib/api/types/util-types";
 import type { ActiveZoneResponse } from "@/lib/api/types/zone-types";

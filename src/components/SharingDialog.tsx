@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useHousehold } from "@/hooks/useHousehold";
 import {
@@ -11,13 +11,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, Copy, Loader2, Users, Trash, Info, UserCheck, UserX } from "lucide-react";
+import { AlertCircle, Copy, Loader2, Users, Trash, Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import * as householdsApi from "@/lib/api/households";
-import type { PendingMemberResponse } from "@/lib/api/households";
+import { createShareApi } from "@/lib/api/sharing";
+// import type { PendingMemberResponse } from "@/lib/api/households";
 
 interface SharingDialogProps {
   open: boolean;
@@ -35,22 +35,23 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
   const { members, refetchMembers } = useHousehold();
 
   const [inviteCode, setInviteCode] = useState<string | null>(null);
-  // const [members, setMembers] = useState<MemberResponse[]>([]);
-  const [pendingMembers, setPendingMembers] = useState<PendingMemberResponse[]>([]);
+  const shareApi = useMemo(
+      () => (activeHouseholdId ? createShareApi(activeHouseholdId) : null),
+      [activeHouseholdId]
+    );
   const [joinCode, setJoinCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [approvingUserId, setApprovingUserId] = useState<string | null>(null);
 
   const loadHouseholdData = useCallback(async () => {
-    if (!activeHouseholdId) return;
+
+    if (!activeHouseholdId || !shareApi ) return;
+
     try {
-      const [inviteRes, pendingRes] = await Promise.all([
-        householdsApi.getInviteCode(activeHouseholdId),
-        householdsApi.listPendingMembers(activeHouseholdId),
+      const [inviteRes] = await Promise.all([
+        shareApi.getInviteCode(),
       ]);
-      setInviteCode(inviteRes.invite_code);
-      setPendingMembers(pendingRes.items);
+      setInviteCode(inviteRes.invite_key);
       await refetchMembers();
     } catch (err) {
       console.error("Erro ao carregar dados da residência:", err);
@@ -65,43 +66,23 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
     }
   }, [open, loadHouseholdData]);
 
-  // Poll for pending join requests while the dialog is open
-  useEffect(() => {
-    if (open && activeHouseholdId) {
-      const interval = setInterval(loadHouseholdData, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [open, activeHouseholdId, loadHouseholdData]);
 
-  const handleApproveUser = async (userId: string) => {
-    if (!activeHouseholdId) return;
-    setApprovingUserId(userId);
-    try {
-      await householdsApi.approvePendingMember(activeHouseholdId, userId);
-      toast.success("Usuário aprovado com sucesso!");
-      await loadHouseholdData();
-    } catch (err) {
-      console.error("Erro ao aprovar usuário:", err);
-      toast.error("Erro ao aprovar usuário");
-    } finally {
-      setApprovingUserId(null);
-    }
-  };
+  // TODO: Criar handle de  revoke de compartilhamento
 
-  const handleRejectUser = async (userId: string) => {
-    if (!activeHouseholdId) return;
-    setApprovingUserId(userId);
-    try {
-      await householdsApi.rejectPendingMember(activeHouseholdId, userId);
-      toast.success("Solicitação rejeitada");
-      await loadHouseholdData();
-    } catch (err) {
-      console.error("Erro ao rejeitar usuário:", err);
-      toast.error("Erro ao rejeitar solicitação");
-    } finally {
-      setApprovingUserId(null);
-    }
-  };
+  // const handleRejectUser = async (userId: string) => {
+  //   if (!activeHouseholdId) return;
+  //   setApprovingUserId(userId);
+  //   try {
+  //     await householdsApi.rejectPendingMember(activeHouseholdId, userId);
+  //     toast.success("Solicitação rejeitada");
+  //     await loadHouseholdData();
+  //   } catch (err) {
+  //     console.error("Erro ao rejeitar usuário:", err);
+  //     toast.error("Erro ao rejeitar solicitação");
+  //   } finally {
+  //     setApprovingUserId(null);
+  //   }
+  // };
 
   const handleCopyCode = () => {
     if (inviteCode) {
@@ -111,11 +92,11 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
   };
 
   const handleRegenerateCode = async () => {
-    if (!activeHouseholdId) return;
+    if (!activeHouseholdId || !shareApi ) return;
     setIsLoading(true);
     try {
-      const res = await householdsApi.regenerateInviteCode(activeHouseholdId);
-      setInviteCode(res.invite_code);
+      const res = await shareApi.getInviteCode();
+      setInviteCode(res.invite_key);
       toast.success("Novo código gerado!");
     } catch (err) {
       console.error("Erro ao gerar novo código:", err);
@@ -145,12 +126,11 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
     setIsLoading(true);
 
     try {
-      const result = await householdsApi.joinHouseholdByInviteCode(joinCode.trim());
-      if (result.status === "pending") {
-        toast.success("Solicitação enviada! Aguarde a aprovação do dono da residência.");
-      } else {
-        toast.success("Você entrou na residência compartilhada!");
-      }
+      if (!shareApi ) return;
+
+      const result = await shareApi.joinHouseholdByInviteCode(joinCode.trim());
+      toast.success(result.message);
+
       onOpenChange(false);
     } catch (err) {
       console.error("Erro ao entrar na residência:", err);
@@ -160,12 +140,26 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
     }
   };
 
-  const handleRemoveMember = async (userId: string) => {
-    if (!activeHouseholdId) return;
-    if (!confirm("Tem certeza que deseja remover este usuário?")) return;
+  const handleLeaveHouse = async () => {
+    if (!activeHouseholdId || !shareApi ) return;
+    if (!confirm("Tem certeza que deseja sair desta casa?")) return;
 
     try {
-      await householdsApi.removeMember(activeHouseholdId, userId);
+      await shareApi.leaveHousehold();
+      await refetchMembers();
+      toast.success("Usuário removido com sucesso");
+    } catch (err) {
+      console.error("Erro ao sair da residência:", err);
+      toast.error("Erro ao sair da residência:");
+    }
+  };
+
+  const handleRemoveMember = async (userId: string) => {
+    if (!activeHouseholdId || !shareApi ) return;
+    if (!confirm("Tem certeza que deseja removber esse usuário?")) return;
+
+    try {
+      await shareApi.removeMember(userId);
       await refetchMembers();
       toast.success("Usuário removido com sucesso");
     } catch (err) {
@@ -176,7 +170,7 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-107">
         <DialogHeader>
           <DialogTitle>Compartilhamento</DialogTitle>
           <DialogDescription>
@@ -229,52 +223,6 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
               Gerar novo código
             </Button>
 
-            {pendingMembers.length > 0 && (
-              <div className="mt-4 space-y-2">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-orange-500" />
-                  <p className="text-sm font-medium">Solicitações pendentes</p>
-                </div>
-                <Separator />
-                <div className="space-y-2">
-                  {pendingMembers.map((pending) => (
-                    <div key={pending.user_id} className="flex justify-between items-center p-2 bg-muted/50 rounded">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="bg-orange-50">
-                          {pending.name}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">aguardando aprovação</span>
-                      </div>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-green-600 hover:text-green-700"
-                          onClick={() => handleApproveUser(pending.user_id)}
-                          disabled={approvingUserId === pending.user_id}
-                        >
-                          {approvingUserId === pending.user_id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <UserCheck className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-600 hover:text-red-700"
-                          onClick={() => handleRejectUser(pending.user_id)}
-                          disabled={approvingUserId === pending.user_id}
-                        >
-                          <UserX className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {members.length > 0 && (
               <div className="mt-4 space-y-2">
                 <div className="flex items-center gap-2">
@@ -289,9 +237,6 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
                         <Badge variant="outline" className="bg-shine-teal/10">
                           {member.user_id === user?.id ? user?.name ?? "Você" : member.user_id}
                         </Badge>
-                        {member.user_id === user?.id && (
-                          <span className="text-xs text-muted-foreground">(Você)</span>
-                        )}
                         {member.role === "owner" && (
                           <span className="text-xs text-muted-foreground">(Dono)</span>
                         )}
@@ -306,6 +251,19 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
                           <Trash className="h-4 w-4" />
                         </Button>
                       )}
+
+{/* TODO: ADICIONAR BOTÃO DE LEAVE HOUSEHOLD
+                      {member.role !== "owner" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive"
+                          onClick={() => handleLeaveHouse()}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      )}
+                        */}
                     </div>
                   ))}
                 </div>

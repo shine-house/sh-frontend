@@ -3,8 +3,9 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { createTasksApi } from "@/lib/api/tasks";
 import { createRoomsApi } from "@/lib/api/rooms";
+import { createZonesApi } from "@/lib/api/zones";
 
-import type { RoomResponse, UpdateRoomRequest } from "../room-types";
+import type { RoomResponse, UpdateRoomRequest } from "@/lib/api/types/room-types";
 import type { TaskCreate, TaskUpdate, TaskWithStatus } from "../../lib/api/types/task-types";
 import type { TaskTypeEnum } from "../../lib/api/types/util-types";
 import type { ActiveZoneResponse } from "@/lib/api/types/zone-types";
@@ -33,13 +34,18 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [activeHouseholdId]
   );
 
+  const zonesApi = useMemo(
+    () => (activeHouseholdId ? createZonesApi(activeHouseholdId) : null),
+    [activeHouseholdId]
+  );
+
   const [rooms, setRooms] = useState<RoomResponse[]>([]);
   const [tasks, setTasks] = useState<TaskWithStatus[]>([]);
   const [activeZone, setActiveZone] = useState<ActiveZoneResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const fetchAll = useCallback(async () => {
-    if (!roomsApi || !tasksApi) {
+    if (!roomsApi || !tasksApi  || !zonesApi) {
       setIsLoading(false);
       return;
     }
@@ -48,7 +54,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const [roomsRes, tasksRes, zoneRes] = await Promise.all([
         roomsApi.listRooms(),
         tasksApi.listTasks(),
-        roomsApi.getActiveZone().catch(() => null),
+        zonesApi.getActiveZone().catch(() => null),
       ]);
       setRooms(roomsRes.items);
       setTasks(tasksRes.items);
@@ -85,11 +91,11 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const reorderRooms = async (roomIds: string[]) => {
-    if (!roomsApi) return;
+    if (!roomsApi || !zonesApi ) return;
     try {
       const result = await roomsApi.reorderRooms({ room_ids: roomIds });
       setRooms(result.items);
-      const zoneRes = await roomsApi.getActiveZone().catch(() => null);
+      const zoneRes = await zonesApi.getActiveZone().catch(() => null);
       setActiveZone(zoneRes);
     } catch (error) {
       console.error("Erro ao reordenar cômodos:", error);
@@ -124,7 +130,11 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!tasksApi) return;
     try {
       const task = await tasksApi.createTask(data);
-      setTasks((prev) => [...prev, task]);
+      setTasks((prev) => [...prev, {
+        ...task,
+        is_available: true,
+        last_execution: null}
+      ]);
     } catch (error) {
       console.error("Erro ao criar tarefa:", error);
       toast.error("Erro ao criar tarefa");
