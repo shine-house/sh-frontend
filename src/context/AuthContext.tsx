@@ -26,11 +26,27 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
-  children 
-}) => {
-  const [user, setUser] = useState<UserResponse | null>(null);
-  const [activeHouseholdId, setActiveHouseholdId] = useState<string | null>(null);
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const USER_KEY = "sh_user";
+  const HOUSEHOLD_KEY = "sh_active_household";
+
+  const [user, setUser] = useState<UserResponse | null>(() => {
+    try {
+      const raw = localStorage.getItem(USER_KEY);
+      return raw ? (JSON.parse(raw) as UserResponse) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [activeHouseholdId, setActiveHouseholdId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(HOUSEHOLD_KEY);
+    } catch {
+      return null;
+    }
+  });
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Initial auth check: validate any stored token against the backend
@@ -40,6 +56,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           const session = await getCurrentUser();
           setUser(session?.user ?? null);
           setActiveHouseholdId(session?.active_household_id ?? null);
+
+          // persist server-validated session to localStorage
+          if (session?.user) {
+            try {
+              localStorage.setItem(USER_KEY, JSON.stringify(session.user));
+            } catch {}
+          } else {
+            try {
+              localStorage.removeItem(USER_KEY);
+              localStorage.removeItem(HOUSEHOLD_KEY);
+            } catch {}
+          }
         } catch (error) {
           console.error("Erro ao verificar sessão:", error);
           setUser(null);
@@ -60,7 +88,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         throw new Error("Falha na autenticação. Tente novamente.");
       }
       setUser(authUser);
+      try {
+        localStorage.setItem(USER_KEY, JSON.stringify(authUser));
+      } catch {}
       setActiveHouseholdId(active_household_id);
+      try {
+        if (active_household_id) localStorage.setItem(HOUSEHOLD_KEY, active_household_id);
+      } catch {}
       toast.success(`Bem-vindo, ${authUser.name || authUser.email.split('@')[0]}!`);
     } catch (error) {
       console.error("Erro no login:", error);
@@ -111,22 +145,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       console.log("Fazendo logout");
       await signOut();
       setUser(null);
+      try {
+        localStorage.removeItem("sh_user");
+        localStorage.removeItem("sh_active_household");
+      } catch {}
     } catch (error) {
       console.error("Erro no logout:", error);
       toast.error("Erro ao sair da conta");
     }
   };
+  // While we're validating/refreshing the session, render a simple loading state
+  if (isLoading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}>
+        <div>Carregando...</div>
+      </div>
+    );
+  }
 
-return (
+  return (
     <AuthContext.Provider
-      value={
-        { user, 
-          activeHouseholdId, 
-          isAuthenticated: !!user, 
-          isLoading, 
-          login, 
-          register, 
-          logout }}
+      value={{
+        user,
+        activeHouseholdId,
+        isAuthenticated: !!user,
+        isLoading,
+        login,
+        register,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>

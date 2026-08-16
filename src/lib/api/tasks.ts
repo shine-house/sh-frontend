@@ -35,10 +35,8 @@ export const createTasksApi = (householdId: string) => {
     completeTask: (id: string, notes?: string) =>
       apiClient.post<TaskExecutionResponse>(`${basePath}/${id}/execute`, {notes}),
 
-    uncompleteTask: (id: string, executionId: string) =>
-      //apiClient.delete<void>(`${basePath}/${id}/execute`),
-       // TODO: REMOVER
-       apiClient.delete<void>(`${basePath}/${id}/executions/${executionId}`),
+    uncompleteTask: (executionId: string) =>
+       apiClient.delete<void>(`${basePath}/executions/${executionId}`),
   };
 };
 

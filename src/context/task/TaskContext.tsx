@@ -176,7 +176,8 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
           )
         );
       } else if (task.last_execution) {
-        await tasksApi.uncompleteTask(id, task.last_execution.id);
+        console.log(task.last_execution.id)
+        await tasksApi.uncompleteTask(task.last_execution.id);
         setTasks((prev) =>
           prev.map((t) => (t.id === id ? { ...t, is_available: true, last_execution: null } : t))
         );

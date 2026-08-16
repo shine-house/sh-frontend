@@ -68,17 +68,16 @@ const ListsPage = () => {
                 <span className="font-medium">Zona da semana: {activeZone.room_name}</span>
                 <p className="text-xs text-muted-foreground mt-1">
                   Próxima zona em: {format(new Date(activeZone.period_end_date), "dd 'de' MMMM", { locale: ptBR })}
-                  {" "}({activeZone.days_remaining} {activeZone.days_remaining === 1 ? "dia" : "dias"})
                 </p>
               </div>
             </AlertDescription>
           </Alert>
         )}
 
-        <Tabs defaultValue="tasks">
+        <Tabs defaultValue="rooms">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="tasks">Tarefas</TabsTrigger>
             <TabsTrigger value="rooms">Cômodos</TabsTrigger>
+            <TabsTrigger value="tasks">Tarefas</TabsTrigger>
             <TabsTrigger value="calendar">Calendário</TabsTrigger>
           </TabsList>
 

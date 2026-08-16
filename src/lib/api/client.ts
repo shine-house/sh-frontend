@@ -2,12 +2,18 @@ import type { ErrorResponse } from "./types/util-types";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-const TOKEN_KEY = "access_token";
+const ACCESS_TOKEN_KEY = "access_token";
+const REFRESH_TOKEN_KEY = "refresh_token";
 
 export const tokenStorage = {
-  get: () => localStorage.getItem(TOKEN_KEY),
-  set: (token: string) => localStorage.setItem(TOKEN_KEY, token),
-  clear: () => localStorage.removeItem(TOKEN_KEY),
+  get: () => localStorage.getItem(ACCESS_TOKEN_KEY),
+  set: (token: string) => localStorage.setItem(ACCESS_TOKEN_KEY, token),
+  getRefresh: () => localStorage.getItem(REFRESH_TOKEN_KEY),
+  setRefresh: (token: string) => localStorage.setItem(REFRESH_TOKEN_KEY, token),
+  clear: () => {
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+  },
 };
 
 
@@ -30,6 +36,8 @@ async function request<T>(
 ): Promise<T> {
   const token = tokenStorage.get();
 
+  const retryFlag = (options as any)?._retry === true;
+
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
@@ -40,7 +48,12 @@ async function request<T>(
   });
 
   if (!res.ok) {
-    if (res.status === 401) {
+    // Try to refresh token once on 401 responses and retry the request
+    if (res.status === 401 && !retryFlag) {
+      const refreshed = await tryRefresh();
+      if (refreshed) {
+        return request<T>(path, { ...(options as any), _retry: true } as RequestInit);
+      }
       tokenStorage.clear();
     }
 
@@ -63,6 +76,31 @@ async function request<T>(
   }
 
   return res.json();
+}
+
+async function tryRefresh(): Promise<boolean> {
+  const refreshToken = tokenStorage.getRefresh();
+  if (!refreshToken) return false;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+
+    if (!res.ok) return false;
+
+    const data = await res.json().catch(() => null);
+    if (!data || !data.access_token) return false;
+
+    tokenStorage.set(data.access_token);
+    if (data.refresh_token) tokenStorage.setRefresh(data.refresh_token);
+
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 export const apiClient = {

@@ -46,7 +46,6 @@ const RoomDetailPage = () => {
         onBack={() => navigate("/")}
       />
 
-      {/* <main className="flex-1 container max-w-4xl p-4 space-y-6 mb-16"> */}
       <main className="mx-auto w-full max-w-4xl flex-1 p-4 space-y-6 mb-16">
         {isCurrentZone && activeZone && (
           <Alert className="bg-shine-teal/20 border-shine-teal">
@@ -55,7 +54,6 @@ const RoomDetailPage = () => {
               <span className="font-medium">Este é o cômodo da semana!</span>
               <p className="text-xs text-muted-foreground mt-1">
                 Próxima zona em: {format(new Date(activeZone.period_end_date), "dd 'de' MMMM", { locale: ptBR })}
-                {" "}({activeZone.days_remaining} {activeZone.days_remaining === 1 ? "dia" : "dias"})
               </p>
             </AlertDescription>
           </Alert>

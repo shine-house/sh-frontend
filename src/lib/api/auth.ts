@@ -6,6 +6,7 @@ import type { InfoMessage } from "./types/util-types";
 export const signIn = async (email: string, password: string) => {
   const data = await apiClient.post<LoginResponse>("/auth/login", { email, password });
   tokenStorage.set(data.access_token);
+  if (data.refresh_token) tokenStorage.setRefresh(data.refresh_token);
   return { user: data.user, active_household_id: data.active_household_id };
 };
 
@@ -30,7 +31,6 @@ export const getCurrentUser = async (): Promise<AuthMeResponse | null> => {
 };
 
 export const forgotPassword = async (email:string): Promise< InfoMessage> => {
-
   return await apiClient.post<InfoMessage>("/auth/forgot-password", {
     email
   });
