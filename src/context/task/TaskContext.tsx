@@ -1,14 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
+import React, { createContext, useContext, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { toast } from "sonner";
-import { createTasksApi } from "@/lib/api/tasks";
-import { createRoomsApi } from "@/lib/api/rooms";
-import { createZonesApi } from "@/lib/api/zones";
+import { useHouseholdData } from "@/features/household/useHouseholdData";
+import { useTaskMutations } from "@/features/tasks/useTaskMutations";
 
-import type { RoomResponse, UpdateRoomRequest } from "@/lib/api/types/room-types";
+import type { UpdateRoomRequest } from "@/lib/api/types/room-types";
 import type { TaskCreate, TaskUpdate, TaskWithStatus } from "../../lib/api/types/task-types";
 import type { TaskTypeEnum } from "../../lib/api/types/util-types";
-import type { ActiveZoneResponse } from "@/lib/api/types/zone-types";
 import type { TaskContextType } from "./types";
 import { getStartOfWeek, addDays } from "./taskUtils";
 
@@ -23,169 +20,59 @@ export const useTask = () => {
 };
 
 export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, activeHouseholdId, isLoading: authLoading } = useAuth();
+  const { activeHouseholdId: _activeHouseholdId } = useAuth();
+  const {
+    addRoom: addRoomMutation,
+    reorderRooms: reorderRoomsMutation,
+    editRoom: editRoomMutation,
+    removeRoom: removeRoomMutation,
+    addTask: addTaskMutation,
+    editTask: editTaskMutation,
+    removeTask: removeTaskMutation,
+    toggleTaskStatus: toggleTaskStatusMutation,
+    isLoading: mutationsLoading,
+  } = useTaskMutations();
 
-  const tasksApi = useMemo(
-    () => (activeHouseholdId ? createTasksApi(activeHouseholdId) : null),
-    [activeHouseholdId]
-  );
-  const roomsApi = useMemo(
-    () => (activeHouseholdId ? createRoomsApi(activeHouseholdId) : null),
-    [activeHouseholdId]
-  );
+  const { rooms, tasks, activeZone, isLoading: householdLoading, refetch } = useHouseholdData();
+  const isLoading = householdLoading || mutationsLoading;
 
-  const zonesApi = useMemo(
-    () => (activeHouseholdId ? createZonesApi(activeHouseholdId) : null),
-    [activeHouseholdId]
-  );
-
-  const [rooms, setRooms] = useState<RoomResponse[]>([]);
-  const [tasks, setTasks] = useState<TaskWithStatus[]>([]);
-  const [activeZone, setActiveZone] = useState<ActiveZoneResponse | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  const fetchAll = useCallback(async () => {
-    if (!roomsApi || !tasksApi  || !zonesApi) {
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const [roomsRes, tasksRes, zoneRes] = await Promise.all([
-        roomsApi.listRooms(),
-        tasksApi.listTasks(),
-        zonesApi.getActiveZone().catch(() => null),
-      ]);
-      setRooms(roomsRes.items);
-      setTasks(tasksRes.items);
-      setActiveZone(zoneRes);
-    } catch (error) {
-      console.error("Erro ao carregar dados:", error);
-      toast.error("Erro ao carregar seus dados");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [roomsApi, tasksApi]);
-
-  useEffect(() => {
-    if (authLoading) return;
-    if (!user || !activeHouseholdId) {
-      setRooms([]);
-      setTasks([]);
-      setActiveZone(null);
-      setIsLoading(false);
-      return;
-    }
-    fetchAll();
-  }, [user, activeHouseholdId, authLoading, fetchAll]);
+  const refetchSafe = async () => {
+    await refetch();
+  };
 
   const addRoom = async (name: string) => {
-    if (!roomsApi) return;
-    try {
-      const room = await roomsApi.createRoom({ name });
-      setRooms((prev) => [...prev, room]);
-    } catch (error) {
-      console.error("Erro ao criar cômodo:", error);
-      toast.error("Erro ao criar cômodo");
-    }
+    await addRoomMutation(name);
   };
 
   const reorderRooms = async (roomIds: string[]) => {
-    if (!roomsApi || !zonesApi ) return;
-    try {
-      const result = await roomsApi.reorderRooms({ room_ids: roomIds });
-      setRooms(result.items);
-      const zoneRes = await zonesApi.getActiveZone().catch(() => null);
-      setActiveZone(zoneRes);
-    } catch (error) {
-      console.error("Erro ao reordenar cômodos:", error);
-      toast.error("Erro ao reordenar cômodos");
-    }
+    await reorderRoomsMutation(roomIds);
   };
 
   const editRoom = async (id: string, data: UpdateRoomRequest) => {
-    if (!roomsApi) return;
-    try {
-      const updated = await roomsApi.updateRoom(id, data);
-      setRooms((prev) => prev.map((r) => (r.id === id ? updated : r)));
-    } catch (error) {
-      console.error("Erro ao editar cômodo:", error);
-      toast.error("Erro ao editar cômodo");
-    }
+    await editRoomMutation(id, data);
   };
 
   const removeRoom = async (id: string) => {
-    if (!roomsApi) return;
-    try {
-      await roomsApi.deleteRoom(id);
-      setRooms((prev) => prev.filter((r) => r.id !== id));
-      setTasks((prev) => prev.filter((t) => t.room_id !== id));
-    } catch (error) {
-      console.error("Erro ao remover cômodo:", error);
-      toast.error("Erro ao remover cômodo");
-    }
+    await removeRoomMutation(id);
   };
 
   const addTask = async (data: TaskCreate) => {
-    if (!tasksApi) return;
-    try {
-      const task = await tasksApi.createTask(data);
-      setTasks((prev) => [...prev, {
-        ...task,
-        is_available: true,
-        last_execution: null}
-      ]);
-    } catch (error) {
-      console.error("Erro ao criar tarefa:", error);
-      toast.error("Erro ao criar tarefa");
-    }
+    await addTaskMutation(data);
   };
 
   const editTask = async (id: string, data: TaskUpdate) => {
-    if (!tasksApi) return;
-    try {
-      const updated = await tasksApi.updateTask(id, data);
-      setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)));
-    } catch (error) {
-      console.error("Erro ao editar tarefa:", error);
-      toast.error("Erro ao editar tarefa");
-    }
+    await editTaskMutation(id, data);
   };
 
   const removeTask = async (id: string) => {
-    if (!tasksApi) return;
-    try {
-      await tasksApi.deleteTask(id);
-      setTasks((prev) => prev.filter((t) => t.id !== id));
-    } catch (error) {
-      console.error("Erro ao remover tarefa:", error);
-      toast.error("Erro ao remover tarefa");
-    }
+    await removeTaskMutation(id);
   };
 
   const toggleTaskStatus = async (id: string) => {
-    if (!tasksApi) return;
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
-    try {
-      if (task.is_available) {
-        const execution = await tasksApi.completeTask(id);
-        setTasks((prev) =>
-          prev.map((t) =>
-            t.id === id ? { ...t, is_available: false, last_execution: execution } : t
-          )
-        );
-      } else if (task.last_execution) {
-        console.log(task.last_execution.id)
-        await tasksApi.uncompleteTask(task.last_execution.id);
-        setTasks((prev) =>
-          prev.map((t) => (t.id === id ? { ...t, is_available: true, last_execution: null } : t))
-        );
-      }
-    } catch (error) {
-      console.error("Erro ao atualizar status da tarefa:", error);
-      toast.error("Erro ao atualizar tarefa");
-    }
+
+    await toggleTaskStatusMutation(id, task.is_available, task.last_execution?.id ?? null);
   };
 
   const filterTasks = useCallback(
@@ -197,8 +84,6 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [tasks]
   );
 
-  // Client-side preview only — not an authorization/visibility decision.
-  // The authoritative active zone is `activeZone`, fetched from the backend.
   const getZoneCalendar = useCallback(
     (weeks: number) => {
       const calendar: Array<{ date: Date; roomId: string | null }> = [];
@@ -237,7 +122,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         removeTask,
         filterTasks,
         getZoneCalendar,
-        refetch: fetchAll,
+        refetch: refetchSafe,
       }}
     >
       {children}

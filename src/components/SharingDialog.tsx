@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { useHousehold } from "@/hooks/useHousehold";
 import {
@@ -32,7 +33,29 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
   onOpenChange
 }) => {
   const { user, isAuthenticated, activeHouseholdId } = useAuth();
+  const queryClient = useQueryClient();
   const { members, refetchMembers } = useHousehold();
+  const currentMemberRole = members.find((member) => member.user_id === user?.id)?.role;
+
+  const updateActiveHousehold = useCallback((householdId: string | null) => {
+    queryClient.setQueryData(["auth", "me"], (prev: { user?: typeof user; active_household_id?: string | null } | undefined) => {
+      if (!prev) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        active_household_id: householdId,
+      };
+    });
+
+    if (householdId) {
+      localStorage.setItem("sh_active_household", householdId);
+      return;
+    }
+
+    localStorage.removeItem("sh_active_household");
+  }, [queryClient, user]);
 
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const shareApi = useMemo(
@@ -51,8 +74,9 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
       const [inviteRes] = await Promise.all([
         shareApi.getInviteCode(),
       ]);
-      setInviteCode(inviteRes.invite_key);
+      setInviteCode(inviteRes.active_invite.invite_key);
       await refetchMembers();
+      console.log("-------  ",members," =======")
     } catch (err) {
       console.error("Erro ao carregar dados da residência:", err);
     }
@@ -95,7 +119,7 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
     if (!activeHouseholdId || !shareApi ) return;
     setIsLoading(true);
     try {
-      const res = await shareApi.getInviteCode();
+      const res = await shareApi.getNewInviteCode();
       setInviteCode(res.invite_key);
       toast.success("Novo código gerado!");
     } catch (err) {
@@ -129,6 +153,10 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
       if (!shareApi ) return;
 
       const result = await shareApi.joinHouseholdByInviteCode(joinCode.trim());
+      updateActiveHousehold(result.household_id);
+      await queryClient.invalidateQueries({ queryKey: ["household"] });
+      await queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
+      await refetchMembers();
       toast.success(result.message);
 
       onOpenChange(false);
@@ -146,8 +174,11 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
 
     try {
       await shareApi.leaveHousehold();
+      updateActiveHousehold(null);
+      await queryClient.invalidateQueries({ queryKey: ["household"] });
+      await queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
       await refetchMembers();
-      toast.success("Usuário removido com sucesso");
+      toast.success("Você saiu da residência com sucesso");
     } catch (err) {
       console.error("Erro ao sair da residência:", err);
       toast.error("Erro ao sair da residência:");
@@ -160,6 +191,7 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
 
     try {
       await shareApi.removeMember(userId);
+      await queryClient.invalidateQueries({ queryKey: ["household"] });
       await refetchMembers();
       toast.success("Usuário removido com sucesso");
     } catch (err) {
@@ -225,17 +257,30 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
 
             {members.length > 0 && (
               <div className="mt-4 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm font-medium">Pessoas conectadas</p>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-sm font-medium">Pessoas conectadas</p>
+                  </div>
+                  {currentMemberRole && currentMemberRole !== "owner" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive"
+                      onClick={handleLeaveHouse}
+                    >
+                      Sair da residência
+                    </Button>
+                  )}
                 </div>
                 <Separator />
                 <div className="space-y-2">
                   {members.map((member) => (
+
                     <div key={member.user_id} className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="bg-shine-teal/10">
-                          {member.user_id === user?.id ? user?.name ?? "Você" : member.user_id}
+                          {member.user_id === user?.id ? user?.name ?? "Você" : member.name}
                         </Badge>
                         {member.role === "owner" && (
                           <span className="text-xs text-muted-foreground">(Dono)</span>

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { useTask } from "@/context/TaskContext";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -31,12 +32,14 @@ interface TaskItemProps {
 }
 
 const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
+  const { user } = useAuth();
   const { toggleTaskStatus, editTask: updateTask, removeTask: deleteTask } = useTask();
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(task.name);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const isDone = !task.is_available;
+  const completedByName = user?.name?.split(' ')[0] || user?.email?.split("@")[0] || "-";
 
   const handleToggleStatus = () => {
     toggleTaskStatus(task.id);
@@ -95,7 +98,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
             )}
             {isDone && task.last_execution && (
               <p className="text-xs text-muted-foreground mt-1">
-                Concluída em: {formatDate(task.last_execution.executed_at)} por {task.name}
+                Concluída em: {formatDate(task.last_execution.executed_at)} por {completedByName}
               </p>
             )}
           </>

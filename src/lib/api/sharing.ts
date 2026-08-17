@@ -1,5 +1,6 @@
 import { apiClient } from "./client";
 import type {
+  InviteCodeInfoResponse,
   InviteCodeResponse,
   JoinHouseholdResponse,
   ListMemberResponse
@@ -11,6 +12,9 @@ export const createShareApi = (householdId: string) => {
 
   return {
     getInviteCode: () =>
+      apiClient.get<InviteCodeInfoResponse>(`${basePath}/invites/info`),
+
+    getNewInviteCode: () =>
       apiClient.get<InviteCodeResponse>(`${basePath}/invites`),
 
     revokeInvite: (inviteId: string) =>
