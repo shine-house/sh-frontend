@@ -12,3 +12,35 @@
 - [ ] Ao criar uma tarefa dentro de uma zona,a zona não recarrega com a nova tarefa (invalidet query??)
 - [ ] Tela de zona especifica deve aparecer todas as tarefas relacionadas independe do tipo
 - [ ] ao consoluir uma tarefa a consulta do nome deve ser feita para exibir a ultima pessoa que consluiu a tarfea
+- [ ]UPdate toggle task to new table
+// Mark as completed
+POST /households/{id}/tasks/{task_id}/execute
+{ "notes": "Done!" }
+
+// Unmark (undo)
+POST /households/{id}/tasks/{task_id}/unmark
+{}
+
+// Check state
+GET /households/{id}/tasks/{task_id}
+// Response includes: is_available, last_completion
+POST /households/{id}/tasks/{task_id}/unmark
+
+--- {
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Clean Kitchen",
+  "type": "daily",
+  "last_execution": {
+    "id": "550e8400-e29b-41d4-a716-446655440001",
+    "task_id": "550e8400-e29b-41d4-a716-446655440000",
+    "user_id": "550e8400-e29b-41d4-a716-446655440002",
+    "user": {
+      "id": "550e8400-e29b-41d4-a716-446655440002",
+      "name": "John Doe",
+      "email": "john@example.com"
+    },
+    "execution_date": "2024-01-15",
+    "executed_at": "2024-01-15T10:30:00Z"
+  }
+}---
+

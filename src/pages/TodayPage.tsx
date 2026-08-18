@@ -72,7 +72,6 @@ const TodayPage = () => {
     <div className="flex flex-col min-h-screen">
       <AppHeader title="Hoje" />
 
-      {/* <main className="flex-1 container max-w-4xl p-4 space-y-6 mb-16"> */}
       <main className="mx-auto w-full max-w-4xl flex-1 p-4 space-y-6 mb-16">
         <GuestModeNotice />
 
@@ -108,9 +107,7 @@ const TodayPage = () => {
             </div>
           )}
         </div>
-
-        {/* Daily and weekly tasks are recurrence-driven, independent of the
-            active zone — they must always render, regardless of room/cycle. */}
+        
         <section>
           <TaskList type="daily" title="Tarefas Diárias" readOnly={true} />
         </section>
