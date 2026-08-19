@@ -31,9 +31,8 @@ export interface UserResponse extends UserBase {
 
 export interface UserPublic {
   id: UUID;
-  name?: string | null;
+  name: string;
   email: string;
-  created_at: string;
 }
 
 export interface HouseholdInfo {

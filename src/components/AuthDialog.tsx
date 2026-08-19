@@ -1,12 +1,12 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -25,23 +25,23 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ trigger }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  
+
   // Register form state
   const [registerName, setRegisterName] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  
-  const handleLogin = async (e: React.FormEvent) => {
+
+  const handleLogin = async (e: React.SubmitEvent) => {
     e.preventDefault();
-    
+
     setError(null);
     setIsLoading(true);
-    
+
     try {
       await login(loginEmail, loginPassword);
       setIsOpen(false);
@@ -51,20 +51,20 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ trigger }) => {
       setIsLoading(false);
     }
   };
-  
-  const handleRegister = async (e: React.FormEvent) => {
+
+  const handleRegister = async (e: React.SubmitEvent) => {
     e.preventDefault();
-    
+
     setError(null);
-    
+
     // Validation
     if (registerPassword !== confirmPassword) {
       setError("As senhas não correspondem");
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       await register(registerEmail, registerPassword, registerName);
       setIsOpen(false);
@@ -74,11 +74,11 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ trigger }) => {
       setIsLoading(false);
     }
   };
-  
+
   const handleGoogleLogin = async () => {
     setError(null);
     setIsLoading(true);
-    
+
     try {
       // await loginWithGoogle();
       setIsOpen(false);
@@ -88,7 +88,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ trigger }) => {
       setIsLoading(false);
     }
   };
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -98,13 +98,13 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ trigger }) => {
         <DialogHeader>
           <DialogTitle>Acesse sua conta</DialogTitle>
         </DialogHeader>
-        
+
         <Tabs defaultValue="login" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Entrar</TabsTrigger>
             <TabsTrigger value="register">Cadastrar</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="login" className="space-y-4 pt-4">
             {error && (
               <Alert variant="destructive">
@@ -112,7 +112,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ trigger }) => {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            
+
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="login-email">Email</Label>
@@ -124,7 +124,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ trigger }) => {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="login-password">Senha</Label>
                 <Input
@@ -135,17 +135,17 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ trigger }) => {
                   required
                 />
               </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full shine-gradient" 
+
+              <Button
+                type="submit"
+                className="w-full shine-gradient"
                 disabled={isLoading}
               >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Entrar
               </Button>
             </form>
-            
+
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
@@ -156,7 +156,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ trigger }) => {
                 </span>
               </div>
             </div>
-            
+
             <Button
               variant="outline"
               className="w-full"
@@ -185,7 +185,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ trigger }) => {
               Google
             </Button>
           </TabsContent>
-          
+
           <TabsContent value="register" className="space-y-4 pt-4">
             {error && (
               <Alert variant="destructive">
@@ -193,7 +193,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ trigger }) => {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            
+
             <form onSubmit={handleRegister} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="register-name">Nome</Label>
@@ -204,7 +204,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ trigger }) => {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="register-email">Email</Label>
                 <Input
@@ -215,7 +215,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ trigger }) => {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="register-password">Senha</Label>
                 <Input
@@ -226,7 +226,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ trigger }) => {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="confirm-password">Confirmar Senha</Label>
                 <Input
@@ -237,17 +237,17 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ trigger }) => {
                   required
                 />
               </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full shine-gradient" 
+
+              <Button
+                type="submit"
+                className="w-full shine-gradient"
                 disabled={isLoading}
               >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Cadastrar
               </Button>
             </form>
-            
+
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
@@ -258,7 +258,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ trigger }) => {
                 </span>
               </div>
             </div>
-            
+
             <Button
               variant="outline"
               className="w-full"

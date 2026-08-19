@@ -12,3 +12,5 @@
 - [ ] Ao criar uma tarefa dentro de uma zona,a zona não recarrega com a nova tarefa (invalidet query??)
 - [ ] Tela de zona especifica deve aparecer todas as tarefas relacionadas independe do tipo
 - [ ] ao consoluir uma tarefa a consulta do nome deve ser feita para exibir a ultima pessoa que consluiu a tarfea
+- Ao editar uma tarefa aparece apenas o titulo para editar, deve aparecer tambem as notas
+- [ ] Tela de caléndario não esta funcioanndo para reordenar comodos e nem exibindo a zona da semana correta, hoje 19/08 zona TESTE QUA, verificar semana que vem

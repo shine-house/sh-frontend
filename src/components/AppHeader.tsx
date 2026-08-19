@@ -5,9 +5,9 @@ import AuthDialog from "./AuthDialog";
 import SharingDialog from "./SharingDialog";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { House, User, LogOut, Share2, Bell, Menu, UserPlus, ArrowLeft, InfoIcon } from "lucide-react";
+import { User, LogOut, Share2, Bell, Menu, UserPlus, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { 
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -31,42 +31,42 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     isAuthenticated,
     logout
   } = useAuth();
-  
+
   const [isSharingDialogOpen, setIsSharingDialogOpen] = useState(false);
   const { isShared } = useHousehold();
-  
+
   const handleLogout = () => {
     logout();
     toast.info("Você saiu da sua conta");
   };
-  
+
   const handleEnableNotifications = () => {
     // In a real app, this would request notification permissions
     toast.success("Notificações ativadas!");
   };
-  
+
   return <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b py-3 px-4">
       <div className=" max-w-4xl mx-auto flex items-center justify-between px-[12px]">
-        
+
         <div className="flex items-center gap-3">
           {showBackButton && onBack && <Button variant="ghost" size="icon" onClick={onBack}>
               <ArrowLeft className="h-5 w-5" />
             </Button>}
           <h1 className="text-xl font-medium">{title}</h1>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={handleEnableNotifications}>
             <Bell className="h-5 w-5" />
           </Button>
-          
+
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => setIsSharingDialogOpen(true)} 
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsSharingDialogOpen(true)}
                   className={isShared ? "text-shine-teal" : ""}
                   >
                   <Share2 className="h-5 w-5" />
@@ -107,7 +107,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           </DropdownMenu>
         </div>
       </div>
-      
+
       <SharingDialog open={isSharingDialogOpen} onOpenChange={setIsSharingDialogOpen} />
     </header>;
 };

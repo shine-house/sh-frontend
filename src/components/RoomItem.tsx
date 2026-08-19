@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useTask } from "@/context/TaskContext";
-import type { RoomResponse } from "@/context/room-types";
+import type { RoomResponse } from "@/lib/api/types/room-types";
 import {
   Card,
   CardContent,
@@ -16,7 +16,7 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Edit, Trash } from "lucide-react";
+import { Edit, Trash, CalendarCheck2, HouseIcon } from "lucide-react";
 
 interface RoomItemProps {
   room: RoomResponse;
@@ -90,8 +90,8 @@ const RoomItem: React.FC<RoomItemProps> = ({ room, onSelect }) => {
         </CardHeader>
         <CardContent>
           <div className="flex justify-between text-sm text-muted-foreground">
-            <span>{zoneTasks.length} tarefas de zona</span>
-            <span>{weeklyTasks.length} tarefas semanais</span>
+            <span> <HouseIcon className="h-4 w-4" /> {zoneTasks.length} tarefas de zona</span>
+            <span><CalendarCheck2 className="h-4 w-4" />{weeklyTasks.length} tarefas semanais</span>
           </div>
         </CardContent>
       </Card>

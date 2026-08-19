@@ -127,7 +127,7 @@ const TaskList: React.FC<TaskListProps> = ({ type, roomId, title, readOnly = fal
                 daily — must belong to a Room. */}
             {!roomId && (
               <div className="space-y-2">
-                <label htmlFor="task-room" className="text-sm font-medium">Cômodo</label>
+                <label htmlFor="task-room" className="text-sm font-medium">Cômodo Relacionado:</label>
                 <Select
                   value={newTaskRoomId}
                   onValueChange={(value) => {

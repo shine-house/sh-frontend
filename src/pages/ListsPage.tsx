@@ -77,7 +77,7 @@ const ListsPage = () => {
         <Tabs defaultValue="rooms">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="rooms">Cômodos</TabsTrigger>
-            <TabsTrigger value="tasks">Tarefas</TabsTrigger>
+            <TabsTrigger value="tasks">Tarefas Diárias</TabsTrigger>
             <TabsTrigger value="calendar">Calendário</TabsTrigger>
           </TabsList>
 
@@ -86,7 +86,7 @@ const ListsPage = () => {
               type="daily"
               title="Tarefas Diárias"
             />
-
+{/*
             <div className="mt-6">
               <TaskList
                 type="weekly"
@@ -102,7 +102,7 @@ const ListsPage = () => {
                   title={`Tarefas da Zona: ${activeZone.room_name}`}
                 />
               </div>
-            )}
+            )} */}
           </TabsContent>
 
           <TabsContent value="rooms" className="pt-4">

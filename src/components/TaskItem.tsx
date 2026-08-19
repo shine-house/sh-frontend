@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useAuth } from "@/context/AuthContext";
 import { useTask } from "@/context/TaskContext";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -32,14 +31,21 @@ interface TaskItemProps {
 }
 
 const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
-  const { user } = useAuth();
   const { toggleTaskStatus, editTask: updateTask, removeTask: deleteTask } = useTask();
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(task.name);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
+
+  const formatDate = (isoDate: string) => {
+    return format(new Date(isoDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+  };
+
   const isDone = !task.is_available;
-  const completedByName = user?.name?.split(' ')[0] || user?.email?.split("@")[0] || "-";
+  const completedByName = task.last_completion?.user.name.split(' ')[0] || task.last_completion?.user.email.split("@")[0] || "-";
+  const completedDate = formatDate(
+    task.last_completion?.completed_at ?? new Date().toISOString()
+  );
 
   const handleToggleStatus = () => {
     toggleTaskStatus(task.id);
@@ -57,9 +63,6 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
     setIsDeleteDialogOpen(false);
   };
 
-  const formatDate = (isoDate: string) => {
-    return format(new Date(isoDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
-  };
 
   return (
     <div className="flex items-start gap-3 p-3 border rounded-lg bg-card hover:bg-accent/5 transition-colors">
@@ -96,9 +99,9 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
                 {task.description}
               </p>
             )}
-            {isDone && task.last_execution && (
+            {isDone && task.last_completion && (
               <p className="text-xs text-muted-foreground mt-1">
-                Concluída em: {formatDate(task.last_execution.executed_at)} por {completedByName}
+                Concluída em: {completedDate} por {completedByName}
               </p>
             )}
           </>

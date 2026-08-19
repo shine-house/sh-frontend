@@ -72,7 +72,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
 
-    await toggleTaskStatusMutation(id, task.is_available, task.last_execution?.id ?? null);
+    await toggleTaskStatusMutation(id, task.is_available, task.last_completion?.completed_at ?? null);
   };
 
   const filterTasks = useCallback(

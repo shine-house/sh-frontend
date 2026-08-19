@@ -4,7 +4,6 @@ import type {
   TaskCreate,
   TaskUpdate,
   TaskWithStatus,
-  TaskExecutionResponse,
   TaskQueryParams,
   TaskResponse,
 } from "@/lib/api/types/task-types";
@@ -32,11 +31,11 @@ export const createTasksApi = (householdId: string) => {
     deleteTask: (id: string) =>
       apiClient.delete<void>(`${basePath}/${id}`),
 
-    completeTask: (id: string, notes?: string) =>
-      apiClient.post<TaskExecutionResponse>(`${basePath}/${id}/execute`, {notes}),
+    completeTask: (taskId: string) =>
+      apiClient.post<TaskWithStatus>(`${basePath}/${taskId}/execute`),
 
-    uncompleteTask: (executionId: string) =>
-       apiClient.delete<void>(`${basePath}/executions/${executionId}`),
+    uncompleteTask: (taskId: string) =>
+       apiClient.delete<void>(`${basePath}/${taskId}/unmark`),
   };
 };
 

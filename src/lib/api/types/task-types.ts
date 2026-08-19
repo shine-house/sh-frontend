@@ -1,3 +1,4 @@
+import type { UserPublic } from "./user-types";
 import type { MetadataPagination, TaskTypeEnum } from "./util-types";
 
 export interface TaskCreate {
@@ -26,23 +27,6 @@ export interface TaskResponse {
   updated_at: string;
 }
 
-export interface TaskExecutionCreate {
-  notes?: string | null;
-}
-
-export interface TaskExecutionUpdate {
-  notes?: string | null;
-}
-
-export interface TaskExecutionResponse {
-  id: string;
-  task_id: string;
-  user_id: string;
-  execution_date: string; // YYYY-MM-DD
-  executed_at: string; // ISO datetime
-  notes: string | null;
-}
-
 export interface ListTaskResponse {
   items: TaskResponse[];
   metadata: MetadataPagination;
@@ -55,9 +39,14 @@ export interface TaskQueryParams {
   size?: number;
 }
 
+interface CompletionInfo {
+user: UserPublic;
+completed_at: string;
+}
+
 export interface TaskWithStatus extends TaskResponse {
   is_available: boolean;
-  last_execution: TaskExecutionResponse | null;
+  last_completion?: CompletionInfo;
 }
 
 export interface ListTaskWithStatusResponse {
