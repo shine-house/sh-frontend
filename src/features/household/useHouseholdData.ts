@@ -36,10 +36,11 @@ export const useHouseholdData = () => {
     queryKey: householdQueryKey,
     queryFn: fetchAll,
     enabled: !!user && !!activeHouseholdId && !authLoading,
-    refetchInterval: 15000,
-    staleTime: 1000,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
     retry: false,
-    gcTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   return {

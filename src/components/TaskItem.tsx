@@ -34,6 +34,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
   const { toggleTaskStatus, editTask: updateTask, removeTask: deleteTask } = useTask();
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(task.name);
+  const [editedDescription, setEditedDescription] = useState(task.description ?? "");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
 
@@ -51,9 +52,24 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
     toggleTaskStatus(task.id);
   };
 
+   const handleStartEditing = () => {
+    setEditedName(task.name);
+    setEditedDescription(task.description ?? "");
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setEditedName(task.name);
+    setEditedDescription(task.description ?? "");
+    setIsEditing(false);
+  };
+
   const handleUpdateTask = () => {
     if (editedName.trim()) {
-      updateTask(task.id, { name: editedName });
+      updateTask(task.id, {
+        name: editedName.trim(),
+        description: editedDescription.trim() || null,
+      });
       setIsEditing(false);
     }
   };
@@ -81,8 +97,16 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
               autoFocus
               onKeyDown={(e) => e.key === "Enter" && handleUpdateTask()}
             />
-            <Button size="sm" onClick={handleUpdateTask}>Salvar</Button>
-            <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>Cancelar</Button>
+            <Input
+              value={editedDescription}
+              placeholder="notas (opcional)"
+              onChange={(e) => setEditedDescription(e.target.value)}
+              className="text-sm"
+            />
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleUpdateTask}>Salvar</Button>
+              <Button size="sm" variant="outline" onClick={handleCancelEdit}>Cancelar</Button>
+            </div>
           </div>
         ) : (
           <>
@@ -116,7 +140,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setIsEditing(true)}>
+            <DropdownMenuItem onClick={handleStartEditing}>
               <Pencil className="h-4 w-4 mr-2" />
               Editar
             </DropdownMenuItem>

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useHouseholdData } from "@/features/household/useHouseholdData";
-import { useTaskMutations } from "@/features/tasks/useTaskMutations";
+import { useTaskMutations } from "@/hooks/useTaskMutations";
 
 import type { UpdateRoomRequest } from "@/lib/api/types/room-types";
 import type { TaskCreate, TaskUpdate, TaskWithStatus } from "../../lib/api/types/task-types";

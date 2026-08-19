@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect } from "react";
 import type { UserResponse } from "@/lib/api/types/user-types";
 import { useAuthSession } from "@/features/auth/useAuthSession";
-import { useAuthMutations } from "@/features/auth/useAuthMutations";
+import { useAuthMutations } from "@/hooks/useAuthMutations";
 
 type AuthContextType = {
   user: UserResponse | null;
