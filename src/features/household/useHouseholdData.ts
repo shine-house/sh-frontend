@@ -3,10 +3,11 @@ import { useAuth } from "@/context/AuthContext";
 import { createTasksApi } from "@/lib/api/tasks";
 import { createRoomsApi } from "@/lib/api/rooms";
 import { createZonesApi } from "@/lib/api/zones";
+import { ApiError } from "@/lib/api/client";
 import type { ActiveZoneResponse } from "@/lib/api/types/zone-types";
 
 export const useHouseholdData = () => {
-  const { user, activeHouseholdId, isLoading: authLoading } = useAuth();
+  const { user, activeHouseholdId, isLoading: authLoading, logout } = useAuth();
 
   const tasksApi = activeHouseholdId ? createTasksApi(activeHouseholdId) : null;
   const roomsApi = activeHouseholdId ? createRoomsApi(activeHouseholdId) : null;
@@ -17,17 +18,25 @@ export const useHouseholdData = () => {
       return { rooms: [], tasks: [], activeZone: null as ActiveZoneResponse | null };
     }
 
-    const [roomsRes, tasksRes, zoneRes] = await Promise.all([
-      roomsApi.listRooms(),
-      tasksApi.listTasks(),
-      zonesApi.getActiveZone().catch(() => null),
-    ]);
+    try {
+      const [roomsRes, tasksRes, zoneRes] = await Promise.all([
+        roomsApi.listRooms(),
+        tasksApi.listTasks(),
+        zonesApi.getActiveZone().catch(() => null),
+      ]);
 
-    return {
-      rooms: roomsRes.items,
-      tasks: tasksRes.items,
-      activeZone: zoneRes ?? null,
-    };
+      return {
+        rooms: roomsRes.items,
+        tasks: tasksRes.items,
+        activeZone: zoneRes ?? null,
+      };
+    } catch (error) {
+      if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+        await logout();
+        return { rooms: [], tasks: [], activeZone: null as ActiveZoneResponse | null };
+      }
+      throw error;
+    }
   };
 
   const householdQueryKey = ["household-data", activeHouseholdId] as const;

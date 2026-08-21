@@ -43,7 +43,7 @@ export interface HouseholdInfo {
 
 export interface AuthMeResponse {
   user: UserResponse;
-  active_household_id: string;
+  active_household_id: string | null;
 }
 
 export interface LoginResponse extends AuthMeResponse {

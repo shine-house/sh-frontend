@@ -1,5 +1,5 @@
 import { apiClient, tokenStorage } from "./client";
-import type { UserResponse, AuthMeResponse, LoginResponse} from "./types/user-types";
+import type { UserResponse, AuthMeResponse, LoginResponse } from "./types/user-types";
 import type { InfoMessage } from "./types/util-types";
 
 
@@ -25,12 +25,17 @@ export const getCurrentUser = async (): Promise<AuthMeResponse | null> => {
   if (!tokenStorage.get()) return null;
   try {
     return await apiClient.get<AuthMeResponse>("/auth/me");
-  } catch {
+  } catch (error: any) {
+    if (error?.status === 401 || error?.status === 403) {
+      tokenStorage.clear();
+      localStorage.removeItem("sh_user");
+      localStorage.removeItem("sh_active_household");
+    }
     return null;
   }
 };
 
-export const forgotPassword = async (email:string): Promise< InfoMessage> => {
+export const forgotPassword = async (email: string): Promise<InfoMessage> => {
   return await apiClient.post<InfoMessage>("/auth/forgot-password", {
     email
   });
@@ -42,7 +47,7 @@ export const resetPassword = async (
   newPassword: string,
   confirmPassword: string,
 ): Promise<InfoMessage> => {
-  const data  = await apiClient.post<InfoMessage>(
+  const data = await apiClient.post<InfoMessage>(
     "/auth/reset-password",
     {
       token,

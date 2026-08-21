@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { signIn, signUp, signOut } from "@/lib/api/auth";
+import { toast } from "sonner";
 
 const USER_KEY = "sh_user";
 const HOUSEHOLD_KEY = "sh_active_household";
@@ -10,9 +10,12 @@ export const useAuthMutations = () => {
 
   const loginMutation = useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
+      // Deixe o erro estourar aqui caso a API retorne status 4xx/5xx
       const data = await signIn(email, password);
-      if (!data.user) {
-        throw new Error("Falha na autenticação. Tente novamente.");
+
+      // Validação extra caso sua API retorne 200 mas sem os dados do usuário
+      if (!data || !data.user) {
+        throw new Error("Usuário não encontrado na resposta do servidor.");
       }
       return data;
     },
@@ -25,6 +28,8 @@ export const useAuthMutations = () => {
       localStorage.setItem(USER_KEY, JSON.stringify(data.user));
       if (data.active_household_id) {
         localStorage.setItem(HOUSEHOLD_KEY, data.active_household_id);
+      } else {
+        localStorage.removeItem(HOUSEHOLD_KEY);
       }
 
       toast.success(`Bem-vindo, ${data.user.name || data.user.email.split("@")[0]}!`);
@@ -53,12 +58,33 @@ export const useAuthMutations = () => {
     },
   });
 
+  // CORREÇÃO CRÍTICA: Captura e relança o erro da mutation para o componente visual saber que falhou
+  const login = async (email: string, password: string) => {
+    try {
+      return await loginMutation.mutateAsync({ email, password });
+    } catch (error) {
+      // Relança o erro HTTP original para o bloco catch do AuthDialog/AuthPage
+      throw error;
+    }
+  };
+
+  // CORREÇÃO CRÍTICA: Captura e relança o erro de cadastro
+  const register = async (email: string, password: string, name: string) => {
+    try {
+      return await registerMutation.mutateAsync({ email, password, name });
+    } catch (error) {
+      throw error;
+    }
+  };
+
   return {
     login: async (email: string, password: string) => {
-      await loginMutation.mutateAsync({ email, password });
+      const result = await loginMutation.mutateAsync({ email, password });
+      return result;
     },
     register: async (email: string, password: string, name: string) => {
-      await registerMutation.mutateAsync({ email, password, name });
+      const result = await registerMutation.mutateAsync({ email, password, name });
+      return result;
     },
     logout: async () => {
       await logoutMutation.mutateAsync();

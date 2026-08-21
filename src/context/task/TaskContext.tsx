@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useHouseholdData } from "@/features/household/useHouseholdData";
-import { useTaskMutations } from "@/hooks/useTaskMutations";
+import { useTaskMutations } from "@/features/tasks/useTaskMutations";
 
 import type { UpdateRoomRequest } from "@/lib/api/types/room-types";
 import type { TaskCreate, TaskUpdate, TaskWithStatus } from "../../lib/api/types/task-types";
@@ -72,7 +72,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
 
-    await toggleTaskStatusMutation(id, task.is_available, task.last_completion?.completed_at ?? null);
+    await toggleTaskStatusMutation(id, task.is_available);
   };
 
   const filterTasks = useCallback(

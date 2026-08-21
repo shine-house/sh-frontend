@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2, Sparkles } from "lucide-react";
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -15,11 +15,11 @@ export default function AuthPage() {
   // const { login, register, loginWithGoogle, isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Login form
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  
+
   // Register form
   const [registerName, setRegisterName] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
@@ -37,7 +37,7 @@ export default function AuthPage() {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
-    
+
     try {
       await login(loginEmail, loginPassword);
       navigate('/');
@@ -47,18 +47,18 @@ export default function AuthPage() {
       setIsLoading(false);
     }
   };
-  
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    
+
     if (registerPassword !== confirmPassword) {
       setError("As senhas não correspondem");
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       await register(registerEmail, registerPassword, registerName);
       // Não redirecionar - usuário precisa confirmar email primeiro
@@ -68,11 +68,11 @@ export default function AuthPage() {
       setIsLoading(false);
     }
   };
-  
+
   // const handleGoogleLogin = async () => {
   //   setError(null);
   //   setIsLoading(true);
-    
+
   //   try {
   //     await loginWithGoogle();
   //   } catch (err) {
@@ -83,150 +83,177 @@ export default function AuthPage() {
   // };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-primary/10 to-background">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-center text-2xl">Tarefas em Zona</CardTitle>
-          <CardDescription className="text-center">
-            Acesse sua conta ou crie uma nova
+    <div className="relative min-h-screen flex items-center justify-center p-4 bg-slate-50/50 dark:bg-slate-950 overflow-hidden transition-colors duration-300">
+      {/* Detalhes decorativos de fundo translúcido */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-teal-500/10 dark:bg-teal-500/5 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-slate-400/10 dark:bg-slate-800/10 blur-3xl pointer-events-none" />
+
+      <Card className="w-full max-w-md border-slate-200/60 dark:border-slate-800/80 bg-white dark:bg-slate-900 rounded-2xl shadow-xl z-10 transition-all duration-300">
+        <CardHeader className="space-y-1.5 pt-6 pb-4">
+          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 mb-2">
+            <Sparkles className="h-5 w-5" />
+          </div>
+          <CardTitle className="text-center text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+            Tarefas em Zona
+          </CardTitle>
+          <CardDescription className="text-center text-xs text-slate-500 dark:text-slate-400">
+            Acesse sua conta ou crie uma nova para sincronizar seus ambientes
           </CardDescription>
         </CardHeader>
-        <CardContent>
+
+        <CardContent className="px-6 pb-6">
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Entrar</TabsTrigger>
-              <TabsTrigger value="register">Cadastrar</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-slate-100 dark:bg-slate-950 rounded-xl p-1 mb-4 h-10">
+              <TabsTrigger value="login" className="rounded-lg text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
+                Entrar
+              </TabsTrigger>
+              <TabsTrigger value="register" className="rounded-lg text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">
+                Cadastrar
+              </TabsTrigger>
             </TabsList>
-            
-            <TabsContent value="login" className="space-y-4 pt-4">
+
+            {/* Aba de Login */}
+            <TabsContent value="login" className="space-y-4 pt-1 focus-visible:outline-none">
               {error && (
-                <Alert variant="destructive">
+                <Alert variant="destructive" className="rounded-xl py-2.5">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
+                  <AlertDescription className="text-xs font-medium">{error}</AlertDescription>
                 </Alert>
               )}
-              
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
+
+              <form onSubmit={handleLogin} className="space-y-3.5">
+                <div className="space-y-1.5">
+                  <Label htmlFor="login-email" className="text-[11px] font-semibold tracking-wide uppercase text-slate-500 dark:text-slate-400">
+                    Email
+                  </Label>
                   <Input
                     id="login-email"
                     type="email"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
+                    placeholder="nome@exemplo.com"
+                    className="rounded-xl h-10 text-sm border-slate-200 focus-visible:ring-teal-500 dark:border-slate-800"
                     required
                   />
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Senha</Label>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="login-password">
+                    <span className="text-[11px] font-semibold tracking-wide uppercase text-slate-500 dark:text-slate-400">Senha</span>
+                  </Label>
                   <Input
                     id="login-password"
                     type="password"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="rounded-xl h-10 text-sm border-slate-200 focus-visible:ring-teal-500 dark:border-slate-800"
                     required
                   />
                 </div>
-                
-                <Button 
-                  type="submit" 
-                  className="w-full" 
+
+                <Button
+                  type="submit"
+                  className="w-full rounded-xl h-10 text-xs font-semibold mt-2 bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-50 dark:text-slate-900 dark:hover:bg-slate-200 transition-all active:scale-[0.98]"
                   disabled={isLoading}
                 >
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isLoading && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
                   Entrar
                 </Button>
               </form>
-              
-              <div className="relative">
+
+              <div className="relative py-2">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
+                  <span className="w-full border-t border-slate-100 dark:border-slate-800" />
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
+                <div className="relative flex justify-center text-[10px] uppercase tracking-wider font-semibold">
+                  <span className="bg-white dark:bg-slate-900 px-2 text-slate-400 dark:text-slate-500">
                     Ou continue com
                   </span>
                 </div>
               </div>
-              
+
               <Button
                 variant="outline"
                 // onClick={handleGoogleLogin}
                 // disabled={isLoading}
                 disabled={true}
-                className="w-full"
+                className="w-full rounded-xl h-10 text-xs font-semibold border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed opacity-50"
               >
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Google
+                Google (Em breve)
               </Button>
             </TabsContent>
-            
-            <TabsContent value="register" className="space-y-4 pt-4">
+
+            {/* Aba de Cadastro */}
+            <TabsContent value="register" className="space-y-4 pt-1 focus-visible:outline-none">
               {error && (
-                <Alert variant="destructive">
+                <Alert variant="destructive" className="rounded-xl py-2.5">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
+                  <AlertDescription className="text-xs font-medium">{error}</AlertDescription>
                 </Alert>
               )}
-              
-              <form onSubmit={handleRegister} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="register-name">Nome</Label>
+
+              <form onSubmit={handleRegister} className="space-y-3.5">
+                <div className="space-y-1.5">
+                  <Label htmlFor="register-name" className="text-[11px] font-semibold tracking-wide uppercase text-slate-500 dark:text-slate-400">
+                    Nome completo
+                  </Label>
                   <Input
                     id="register-name"
                     type="text"
                     value={registerName}
                     onChange={(e) => setRegisterName(e.target.value)}
+                    placeholder="Seu nome"
+                    className="rounded-xl h-10 text-sm border-slate-200 focus-visible:ring-teal-500 dark:border-slate-800"
                     required
                   />
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="register-email">Email</Label>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="register-email" className="text-[11px] font-semibold tracking-wide uppercase text-slate-500 dark:text-slate-400">
+                    Email
+                  </Label>
                   <Input
                     id="register-email"
                     type="email"
                     value={registerEmail}
                     onChange={(e) => setRegisterEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="register-password">Senha</Label>
+                    placeholder="nome@exemplo.com"
+                    className="rounded-xl h-10 text-sm border-slate-200 focus-visible:ring-teal-500 dark:border-slate-800"
+                    required />
+
+                  Senha
                   <Input
                     id="register-password"
                     type="password"
                     value={registerPassword}
                     onChange={(e) => setRegisterPassword(e.target.value)}
+                    placeholder="Mínimo 6 caracteres"
+                    className="rounded-xl h-10 text-sm border-slate-200 focus-visible:ring-teal-500 dark:border-slate-800"
                     required
-                    minLength={6}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirmar Senha</Label>
-                  <Input
-                    id="confirm-password"
+                    minLength={6} />
+
+                  Confirmar Senha
+                  <Input id="confirm-password"
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Repita sua senha"
+                    className="rounded-xl h-10 text-sm border-slate-200 focus-visible:ring-teal-500 dark:border-slate-800"
                     required
-                    minLength={6}
-                  />
+                    minLength={6} />
                 </div>
-                
-                <Button 
-                  type="submit" 
-                  className="w-full" 
+
+                <Button
+                  type="submit"
+                  className="w-full"
                   disabled={isLoading}
                 >
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Criar Conta
                 </Button>
               </form>
-              
+
               <p className="text-xs text-center text-muted-foreground">
                 Ao criar uma conta, você receberá um email de confirmação.
               </p>

@@ -9,9 +9,9 @@
     --shine-teal: 171 74% 62%;
     --shine-teal-dark: 164 37% 17%;
 
-    --background: 0 0% 100%;
+    --background: 270 20% 98%;
     --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
+    --card: 210 20% 98%;
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
@@ -29,19 +29,23 @@
     --input: 240 5.9% 90%;
     --ring: 171 74% 62%;
     --radius: 0.75rem;
+
+    --btn-gradient-from: #5EDBC9;
+    --btn-gradient-to: rgba(94, 219, 201, 0.8);
+    --btn-text: #111827
   }
- 
+
   .dark {
     --shine-teal: 164 37% 17%;
     --shine-teal-dark: 171 74% 62%;
-    
+
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
     --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 164 37% 17%;
+    --primary: 171 60% 25%;
     --primary-foreground: 0 0% 98%;
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
@@ -54,6 +58,10 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 164 37% 17%;
+
+    --btn-gradient-from: #115e54;
+    --btn-gradient-to: #134e4a;
+    --btn-text: #f8fafc;
   }
 }
 
@@ -84,6 +92,10 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+
+  --color-btn-gradient-from: var(--btn-gradient-from);
+  --color-btn-gradient-to: var(--btn-gradient-to);
+  --color-btn-text: var(--btn-text);
 }
 
 @layer base {
@@ -95,14 +107,30 @@
 
 @layer components {
   .shine-gradient {
-    @apply bg-gradient-to-r from-[#5EDBC9] to-[#5EDBC9]/80 hover:from-[#5EDBC9]/90 hover:to-[#5EDBC9]/70 text-primary-foreground;
+    /* @apply bg-gradient-to-r from-[#5EDBC9] to-[#5EDBC9]/80 hover:from-[#5EDBC9]/90 hover:to-[#5EDBC9]/70 text-primary-foreground; */
+
+   @apply bg-gradient-to-r from-[var(--btn-gradient-from)] to-[var(--btn-gradient-to)] hover:opacity-90 text-[var(--btn-text)] shadow-sm;
+    transition: all 0.2s ease-in-out;
   }
-  
+
   .task-item {
     @apply p-3 rounded-md border bg-card hover:bg-muted/20 transition-colors;
   }
-  
+
   .task-item-done {
     @apply bg-muted;
   }
+
+  @keyframes loading-bar {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 }

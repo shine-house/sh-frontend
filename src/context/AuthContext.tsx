@@ -2,15 +2,16 @@
 import React, { createContext, useContext, useEffect } from "react";
 import type { UserResponse } from "@/lib/api/types/user-types";
 import { useAuthSession } from "@/features/auth/useAuthSession";
-import { useAuthMutations } from "@/hooks/useAuthMutations";
+import { useAuthMutations } from "@/features/auth/useAuthMutations";
+import CleaningLoader from "@/components/CleaningLoader";
 
 type AuthContextType = {
   user: UserResponse | null;
   activeHouseholdId: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ user: UserResponse; active_household_id: string | null }>;
+  register: (email: string, password: string, name: string) => Promise<UserResponse>;
   logout: () => Promise<void>;
 };
 
@@ -36,8 +37,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (sessionQuery.data?.user) {
       localStorage.setItem(USER_KEY, JSON.stringify(sessionQuery.data.user));
+
       if (sessionQuery.data.active_household_id) {
         localStorage.setItem(HOUSEHOLD_KEY, sessionQuery.data.active_household_id);
+      } else {
+        localStorage.removeItem(HOUSEHOLD_KEY);
       }
       return;
     }
@@ -49,11 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isLoading = sessionQuery.isLoading || mutationsLoading;
 
   if (isLoading) {
-    return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}>
-        <div>Carregando...</div>
-      </div>
-    );
+    return <CleaningLoader />
   }
 
   return (

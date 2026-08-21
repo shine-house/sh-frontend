@@ -187,7 +187,7 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
 
   const handleRemoveMember = async (userId: string) => {
     if (!activeHouseholdId || !shareApi ) return;
-    if (!confirm("Tem certeza que deseja removber esse usuário?")) return;
+    if (!confirm("Tem certeza que deseja remover esse usuário?")) return;
 
     try {
       await shareApi.removeMember(userId);

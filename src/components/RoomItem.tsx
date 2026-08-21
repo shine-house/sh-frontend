@@ -16,7 +16,7 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Edit, Trash, CalendarCheck2, HouseIcon } from "lucide-react";
+import { Edit, Trash, CalendarCheck2, Home } from "lucide-react";
 
 interface RoomItemProps {
   room: RoomResponse;
@@ -55,66 +55,101 @@ const RoomItem: React.FC<RoomItemProps> = ({ room, onSelect }) => {
   return (
     <>
       <Card
-        className="cursor-pointer hover:shadow-md transition-shadow"
+        className="cursor-pointer border border-slate-200/60 dark:border-slate-800/80 bg-white dark:bg-slate-900 rounded-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 group"
         onClick={() => onSelect(room.id)}
       >
-        <CardHeader className="pb-2">
-          <div className="flex justify-between items-center">
-            <CardTitle className="text-lg">{room.name}</CardTitle>
-            <div className="flex gap-1">
+        <CardHeader className="pb-3 pt-4 px-4">
+          <div className="flex justify-between items-center gap-2">
+            <CardTitle className="text-base font-bold tracking-tight text-slate-800 dark:text-slate-100">
+              {room.name}
+            </CardTitle>
+
+            <div className="flex gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 shrink-0">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                 onClick={(e) => {
                   e.stopPropagation();
                   setEditedName(room.name);
                   setIsEditing(true);
                 }}
               >
-                <Edit className="h-4 w-4" />
+                <Edit className="h-3.5 w-3.5" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-destructive"
+                className="h-8 w-8 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDelete();
                 }}
               >
-                <Trash className="h-4 w-4" />
+                <Trash className="h-3.5 w-3.5" />
               </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="flex justify-between text-sm text-muted-foreground">
-            <span> <HouseIcon className="h-4 w-4" /> {zoneTasks.length} tarefas de zona</span>
-            <span><CalendarCheck2 className="h-4 w-4" />{weeklyTasks.length} tarefas semanais</span>
+
+        <CardContent className="pb-4 pt-0 px-4">
+          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-950 px-2 py-1 rounded-lg border border-slate-100 dark:border-slate-800/40">
+              <Home className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
+              {zoneTasks.length} {zoneTasks.length === 1 ? 'tarefa' : 'tarefas'} de zona
+            </span>
+            <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-950 px-2 py-1 rounded-lg border border-slate-100 dark:border-slate-800/40">
+              <CalendarCheck2 className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
+              {weeklyTasks.length} {weeklyTasks.length === 1 ? 'tarefa' : 'tarefas'} {weeklyTasks.length === 1 ? 'semanal' : 'semanais'}
+            </span>
           </div>
         </CardContent>
       </Card>
 
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[400px] rounded-2xl p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl">
           <DialogHeader>
-            <DialogTitle>Editar Cômodo</DialogTitle>
+            <DialogTitle className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-50">
+              Editar Cômodo
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label htmlFor="room-name" className="text-sm font-medium">Nome</label>
+
+          <div className="space-y-4 py-3">
+            <div className="space-y-1.5">
+              <label
+                htmlFor="room-name-edit"
+                className="text-xs font-semibold tracking-wide uppercase text-slate-500 dark:text-slate-400"
+              >
+                Nome do ambiente
+              </label>
               <Input
-                id="room-name"
+                id="room-name-edit"
                 value={editedName}
                 onChange={(e) => setEditedName(e.target.value)}
+                className="rounded-xl border-slate-200/80 focus-visible:ring-teal-500 focus-visible:border-teal-500 dark:border-slate-800"
+                autoFocus
+                onKeyDown={(e) => e.key === "Enter" && !isSaving && handleSave()}
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditing(false)}>Cancelar</Button>
-            <Button onClick={handleSave} className="shine-gradient" disabled={isSaving}>
-              Salvar
+
+          {/* Rodapé do Modal */}
+          <DialogFooter className="gap-2 sm:gap-0 border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsEditing(false)}
+              className="rounded-xl border-slate-200 dark:border-slate-800 h-9 text-xs font-semibold px-4"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSave}
+              disabled={isSaving || !editedName.trim()}
+              className="rounded-xl h-9 text-xs font-semibold px-5 bg-teal-600 hover:bg-teal-500 text-white dark:bg-teal-600 dark:hover:bg-teal-700 disabled:opacity-40 disabled:pointer-events-none transition-all"
+            >
+              {isSaving ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
         </DialogContent>

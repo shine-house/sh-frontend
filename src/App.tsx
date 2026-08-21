@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { TaskProvider } from "@/context/TaskContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import TodayPage from "./pages/TodayPage";
 import ListsPage from "./pages/ListsPage";
 import RoomDetailPage from "./pages/RoomDetailPage";
@@ -19,6 +20,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <Toaster />
       <Sonner />
       <AuthProvider>
@@ -31,13 +33,14 @@ const App = () => (
                <Route path="/settings" element={<SettingsPage />} />
                <Route path="/auth" element={<AuthPage />} />
               {/*
-              <Route path="/confirm-email" element={<ConfirmEmailPage />} /> 
+              <Route path="/confirm-email" element={<ConfirmEmailPage />} />
               */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
         </TaskProvider>
       </AuthProvider>
+      </ThemeProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

@@ -88,13 +88,13 @@ export const useTaskMutations = () => {
   });
 
   const toggleTaskStatusMutation = useMutation({
-    mutationFn: async ({ id, isAvailable, lastExecutionId }: { id: string; isAvailable: boolean; lastExecutionId?: string | null }) => {
+    mutationFn: async ({ id, isAvailable}: { id: string; isAvailable: boolean}) => {
       if (!tasksApi) return;
 
       if (isAvailable) {
         await tasksApi.completeTask(id);
-      } else if (lastExecutionId) {
-        await tasksApi.uncompleteTask(lastExecutionId);
+      } else if (id) {
+        await tasksApi.uncompleteTask(id);
       }
     },
     onSuccess: invalidateHouseholdData,
@@ -109,8 +109,8 @@ export const useTaskMutations = () => {
     addTask: async (data: TaskCreate) => addTaskMutation.mutateAsync(data),
     editTask: async (id: string, data: TaskUpdate) => editTaskMutation.mutateAsync({ id, data }),
     removeTask: async (id: string) => removeTaskMutation.mutateAsync(id),
-    toggleTaskStatus: async (id: string, isAvailable: boolean, lastExecutionId?: string | null) =>
-      toggleTaskStatusMutation.mutateAsync({ id, isAvailable, lastExecutionId }),
+    toggleTaskStatus: async (id: string, isAvailable: boolean) =>
+      toggleTaskStatusMutation.mutateAsync({ id, isAvailable}),
     isLoading:
       addRoomMutation.isPending ||
       reorderRoomsMutation.isPending ||
