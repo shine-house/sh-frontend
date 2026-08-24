@@ -32,14 +32,42 @@ export const useTaskMutations = () => {
     onError: () => toast.error("Erro ao criar cômodo"),
   });
 
-  const reorderRoomsMutation = useMutation({
+    const reorderRoomsMutation = useMutation({
     mutationFn: async (roomIds: string[]) => {
-      if (!roomsApi || !zonesApi) return;
+      if (!roomsApi || !zonesApi) {
+        throw new Error("Household not ready");
+      }
       await roomsApi.reorderRooms({ room_ids: roomIds });
       await zonesApi.getActiveZone().catch(() => null);
     },
+    onMutate: async (roomIds: string[]) => {
+      if (!activeHouseholdId) return;
+      const queryKey = ["household-data", activeHouseholdId] as const;
+      await queryClient.cancelQueries({ queryKey, exact: true });
+
+      const previous = queryClient.getQueryData<any>(queryKey);
+
+      queryClient.setQueryData(queryKey, (old: any) => {
+        if (!old) return old;
+        const positionById = new Map(roomIds.map((id, idx) => [id, idx + 1]));
+        return {
+          ...old,
+          rooms: old.rooms.map((room: any) => ({
+            ...room,
+            zone_cycle_position: positionById.get(room.id) ?? room.zone_cycle_position,
+          })),
+        };
+      });
+
+      return { previous };
+    },
+    onError: (_err, _roomIds, context) => {
+      if (context?.previous && activeHouseholdId) {
+        queryClient.setQueryData(["household-data", activeHouseholdId], context.previous);
+      }
+      toast.error("Erro ao reordenar cômodos");
+    },
     onSuccess: invalidateHouseholdData,
-    onError: () => toast.error("Erro ao reordenar cômodos"),
   });
 
   const editRoomMutation = useMutation({

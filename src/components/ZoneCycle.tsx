@@ -12,14 +12,18 @@ const ZoneCycle: React.FC = () => {
     (a, b) => a.zone_cycle_position - b.zone_cycle_position
   );
 
-  const moveRoom = (index: number, direction: "up" | "down") => {
+  const moveRoom = async (index: number, direction: "up" | "down") => {
     const targetIndex = direction === "up" ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= orderedRooms.length) return;
 
     const reordered = [...orderedRooms];
     [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
 
-    reorderRooms(reordered.map((r) => r.id));
+    try {
+      await reorderRooms(reordered.map((r) => r.id));
+    } catch {
+      // rollback already handled by the mutation's onError
+    }
   };
 
   return (
