@@ -84,26 +84,26 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [tasks]
   );
 
-  const getZoneCalendar = useCallback(
-    (weeks: number) => {
-      const calendar: Array<{ date: Date; roomId: string | null }> = [];
-      if (!activeZone || rooms.length === 0) return calendar;
+  // const getZoneCalendar = useCallback(
+  //   (weeks: number) => {
+  //     const calendar: Array<{ date: Date; roomId: string | null }> = [];
+  //     if (!activeZone || rooms.length === 0) return calendar;
 
-      const cycleLength = activeZone.cycle_length;
-      let date = getStartOfWeek(new Date(activeZone.period_start_date));
-      let position = activeZone.cycle_position;
+  //     const cycleLength = activeZone.cycle_length;
+  //     let date = getStartOfWeek(new Date(activeZone.period_start_date));
+  //     let position = activeZone.cycle_position;
 
-      for (let i = 0; i < weeks; i++) {
-        const room = rooms.find((r) => r.zone_cycle_position === position) ?? null;
-        calendar.push({ date: new Date(date), roomId: room?.id ?? null });
-        date = addDays(date, 7);
-        position = (position % cycleLength) + 1;
-      }
+  //     for (let i = 0; i < weeks; i++) {
+  //       const room = rooms.find((r) => r.zone_cycle_position === position) ?? null;
+  //       calendar.push({ date: new Date(date), roomId: room?.id ?? null });
+  //       date = addDays(date, 7);
+  //       position = (position % cycleLength) + 1;
+  //     }
 
-      return calendar;
-    },
-    [activeZone, rooms]
-  );
+  //     return calendar;
+  //   },
+  //   [activeZone, rooms]
+  // );
 
   return (
     <TaskContext.Provider
@@ -121,7 +121,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         editTask,
         removeTask,
         filterTasks,
-        getZoneCalendar,
+        // getZoneCalendar,
         refetch: refetchSafe,
       }}
     >

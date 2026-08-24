@@ -17,6 +17,6 @@ export type TaskContextType = {
   editTask: (id: string, data: TaskUpdate) => Promise<void>;
   removeTask: (id: string) => Promise<void>;
   filterTasks: (roomId?: string, type?: TaskTypeEnum) => TaskWithStatus[];
-  getZoneCalendar: (weeks: number) => Array<{ date: Date; roomId: string | null }>;
+  // getZoneCalendar: (weeks: number) => Array<{ date: Date; roomId: string | null }>;
   refetch: () => Promise<void>;
 };

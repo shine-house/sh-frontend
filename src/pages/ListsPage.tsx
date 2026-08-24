@@ -8,12 +8,12 @@ import TaskList from "@/components/TaskList";
 import RoomList from "@/components/RoomList";
 import AuthDialog from "@/components/AuthDialog";
 import Onboarding from "@/components/Onboarding";
-import ZoneCalendar from "@/components/ZoneCalendar";
+import ZoneCycle from "@/components/ZoneCycle";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Calendar, Clock, Sparkles } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format } from "date-fns";
+import { addDays, parse, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const ListsPage = () => {
@@ -29,6 +29,18 @@ const ListsPage = () => {
     }
   }, []);
 
+  const getNextDay = (endDate: string) => {
+
+  return format(
+    addDays(
+      parse(endDate, "yyyy-MM-dd", new Date()),
+      1
+    ),
+    "dd 'de' MMMM",
+    { locale: ptBR }
+  )
+}
+
   const handleCompleteOnboarding = () => {
     localStorage.setItem("shine-house-onboarding-complete", "true");
     setShowOnboarding(false);
@@ -42,10 +54,8 @@ const ListsPage = () => {
     <div className="flex flex-col min-h-screen bg-slate-50/50 dark:bg-slate-950 transition-colors duration-300">
       <AppHeader title="Minhas Listas" />
 
-      {/* Main padronizado com max-w-3xl para consistência total entre as telas */}
       <main className="mx-auto w-full max-w-3xl flex-1 p-4 sm:p-6 space-y-8 mb-20">
 
-        {/* Alerta de Modo Visitante Modernizado */}
         {!isAuthenticated && (
           <Alert className="border-amber-500/20 bg-amber-500/5 dark:bg-amber-500/10 text-amber-900 dark:text-amber-200 rounded-xl shadow-sm backdrop-blur-sm">
             <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5" />
@@ -78,7 +88,7 @@ const ListsPage = () => {
                 <span className="text-sm opacity-90">{activeZone.room_name}</span>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1">
                   <Sparkles className="h-3 w-3 text-teal-500" />
-                  Próxima rotação em: {format(new Date(activeZone.period_end_date), "dd 'de' MMMM", { locale: ptBR })}
+                  Próxima rotação em: {getNextDay(activeZone.period_end_date)}
                 </p>
               </div>
             </AlertDescription>
@@ -104,7 +114,7 @@ const ListsPage = () => {
               value="calendar"
               className="rounded-lg text-xs font-semibold tracking-tight data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-50 data-[state=active]:shadow-sm transition-all duration-200"
             >
-              Calendário
+              Ordem das Zonas
             </TabsTrigger>
           </TabsList>
 
@@ -125,9 +135,11 @@ const ListsPage = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="calendar" className="pt-1 focus-visible:outline-none focus-visible:ring-0">
+          <TabsContent
+            value="calendar"
+            className="pt-1 focus-visible:outline-none focus-visible:ring-0">
             <div className="bg-white dark:bg-slate-900/60 p-4 sm:p-5 border border-slate-200/50 dark:border-slate-800/50 rounded-2xl shadow-sm animate-in fade-in-50 duration-200">
-              <ZoneCalendar weeks={8} />
+              <ZoneCycle/>
             </div>
           </TabsContent>
         </Tabs>
