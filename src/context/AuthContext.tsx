@@ -50,11 +50,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem(HOUSEHOLD_KEY);
   }, [sessionQuery.data]);
 
-  const isLoading = sessionQuery.isLoading || mutationsLoading;
+  const isBootstrapping = sessionQuery.isLoading;
 
-  if (isLoading) {
+  if (isBootstrapping) {
     return <CleaningLoader />
   }
+
+  // const isLoading = sessionQuery.isLoading || mutationsLoading;
+
+  // if (isLoading) {
+  //   return <CleaningLoader />
+  // }
 
   return (
     <AuthContext.Provider
@@ -62,7 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         activeHouseholdId,
         isAuthenticated: !!user,
-        isLoading,
+        isLoading: mutationsLoading,
         login,
         register,
         logout,

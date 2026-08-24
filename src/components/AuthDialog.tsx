@@ -45,8 +45,8 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ trigger }) => {
     try {
       await login(loginEmail, loginPassword);
       setIsOpen(false);
-    } catch (err) {
-      setError("Falha no login. Verifique suas credenciais.");
+    } catch (err: any) {
+      setError(err?.message || "Falha no login. Verifique suas credenciais.");
     } finally {
       setIsLoading(false);
     }

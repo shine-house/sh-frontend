@@ -10,12 +10,9 @@ export const useAuthMutations = () => {
 
   const loginMutation = useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
-      // Deixe o erro estourar aqui caso a API retorne status 4xx/5xx
       const data = await signIn(email, password);
-
-      // Validação extra caso sua API retorne 200 mas sem os dados do usuário
       if (!data || !data.user) {
-        throw new Error("Usuário não encontrado na resposta do servidor.");
+        throw new Error("Crendenciais inválidas.");
       }
       return data;
     },
@@ -33,6 +30,11 @@ export const useAuthMutations = () => {
       }
 
       toast.success(`Bem-vindo, ${data.user.name || data.user.email.split("@")[0]}!`);
+    },
+    onError: () => {
+      queryClient.setQueryData(["auth", "me"], null);
+      localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(HOUSEHOLD_KEY);
     },
   });
 
@@ -58,37 +60,12 @@ export const useAuthMutations = () => {
     },
   });
 
-  // CORREÇÃO CRÍTICA: Captura e relança o erro da mutation para o componente visual saber que falhou
-  const login = async (email: string, password: string) => {
-    try {
-      return await loginMutation.mutateAsync({ email, password });
-    } catch (error) {
-      // Relança o erro HTTP original para o bloco catch do AuthDialog/AuthPage
-      throw error;
-    }
-  };
-
-  // CORREÇÃO CRÍTICA: Captura e relança o erro de cadastro
-  const register = async (email: string, password: string, name: string) => {
-    try {
-      return await registerMutation.mutateAsync({ email, password, name });
-    } catch (error) {
-      throw error;
-    }
-  };
-
   return {
-    login: async (email: string, password: string) => {
-      const result = await loginMutation.mutateAsync({ email, password });
-      return result;
-    },
-    register: async (email: string, password: string, name: string) => {
-      const result = await registerMutation.mutateAsync({ email, password, name });
-      return result;
-    },
-    logout: async () => {
-      await logoutMutation.mutateAsync();
-    },
+    login: (email: string, password: string) =>
+      loginMutation.mutateAsync({ email, password }),
+    register: (email: string, password: string, name: string) =>
+      registerMutation.mutateAsync({ email, password, name }),
+    logout: () => logoutMutation.mutateAsync(),
     isLoading:
       loginMutation.isPending || registerMutation.isPending || logoutMutation.isPending,
   };

@@ -3,7 +3,6 @@
 - [ ] Criar tela de Reset de senha
 - [ ] Adicionar suporte a paginação para tarefas e comodos
 - [ ] invalidar query de get current zone, aorenomear uma zone
-- [ ] loading tambem antes de carregar as tarefas
 - [ ] Criarmodal de confirmação de remoção de usuárioo da lista
 - [ ] verificar demora na toglle das tasks
 - [ ] Ao criar uma tarefa dentro de uma zona,a zona não recarrega com a nova tarefa (invalidet query??)

@@ -34,10 +34,10 @@ async function request<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
+
   const token = tokenStorage.get();
-
   const retryFlag = (options as any)?._retry === true;
-
+  const isAuthEndpoint = path.startsWith("/auth/login") || path.startsWith("/auth/register");
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
@@ -48,8 +48,7 @@ async function request<T>(
   });
 
   if (!res.ok) {
-    // Try to refresh token once on 401 responses and retry the request
-    if (res.status === 401 && !retryFlag) {
+    if (res.status === 401 && !retryFlag && !isAuthEndpoint) {
       const refreshed = await tryRefresh();
       if (refreshed) {
         return request<T>(path, { ...(options as any), _retry: true } as RequestInit);
