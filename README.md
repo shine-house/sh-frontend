@@ -10,3 +10,5 @@
 - [ ] Tela de caléndario não esta funcioanndo para reordenar comodos e nem exibindo a zona da semana correta, hoje 24/08 zona Sala, verificar semana que vem
 - [ ] mensagem de crendenciais inválidas, melhorar
 - [ ] mensagem de colocar um email, melhorar
+- [ ] loading na criação de tasks dentro de rooms
+- [ ] melhorar loading

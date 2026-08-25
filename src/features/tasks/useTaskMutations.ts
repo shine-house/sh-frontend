@@ -5,7 +5,22 @@ import { createTasksApi } from "@/lib/api/tasks";
 import { createRoomsApi } from "@/lib/api/rooms";
 import { createZonesApi } from "@/lib/api/zones";
 import type { UpdateRoomRequest } from "@/lib/api/types/room-types";
-import type { TaskCreate, TaskUpdate } from "@/lib/api/types/task-types";
+import type { TaskCreate, TaskUpdate, TaskWithStatus } from "@/lib/api/types/task-types";
+import type { TaskTypeEnum } from "@/lib/api/types/util-types";
+import type { TaskMutationContext } from "@/context/task/types";
+import { taskKeys } from "@/lib/queryKeys/taskKeys";
+import { householdKeys } from "@/lib/queryKeys/householdKeys";
+import {
+  invalidateTasksByRoom,
+  invalidateTasksByType,
+  getAllTaskQueriesData,
+  restoreTaskQueriesData,
+  setTaskInAllCaches,
+  addOptimisticTaskToCaches,
+  removeTaskFromCaches,
+  replaceOptimisticTaskInCaches
+} from "@/lib/queryKeys/taskInvalidation";
+import { createOptimisticTask } from "@/features/tasks/optimisticTask";
 
 export const useTaskMutations = () => {
   const { activeHouseholdId } = useAuth();
@@ -15,146 +30,179 @@ export const useTaskMutations = () => {
   const roomsApi = activeHouseholdId ? createRoomsApi(activeHouseholdId) : null;
   const zonesApi = activeHouseholdId ? createZonesApi(activeHouseholdId) : null;
 
-  const invalidateHouseholdData = async () => {
+  const invalidateRoomsAndZone = async () => {
     if (!activeHouseholdId) return;
-    await queryClient.invalidateQueries({
-      queryKey: ["household-data", activeHouseholdId],
-      exact: true,
-    });
+    await queryClient.invalidateQueries({ queryKey: householdKeys.rooms(activeHouseholdId) });
   };
 
-  const syncHouseholdTasks = (items?: any[]) => {
+  const invalidateForTask = async (roomId: string, type: TaskTypeEnum) => {
     if (!activeHouseholdId) return;
-    const safeItems = items ?? [];
-
-    queryClient.setQueryData(["household-data", activeHouseholdId], (old: any) => {
-      if (!old) return { rooms: [], tasks: safeItems, activeZone: null };
-      return { ...old, tasks: safeItems };
-    });
+    if (type === "zone") {
+      await invalidateTasksByRoom(queryClient, activeHouseholdId, roomId);
+      return;
+    }
+    await invalidateTasksByType(queryClient, activeHouseholdId, type);
   };
 
-  const getTasksMutation = useMutation({
-    mutationFn: async () => {
-      if (!tasksApi) return [];
-      const response = await tasksApi.listTasks();
-      return response.items;
-    },
-    onSuccess: async (items) => {
-      syncHouseholdTasks(items);
-      await invalidateHouseholdData();
-    },
-    onError: () => toast.error("Erro ao carregar tarefas"),
-  });
 
   const addRoomMutation = useMutation({
     mutationFn: async (name: string) => {
-      if (!roomsApi) return;
+      if (!roomsApi) throw new Error("Household not ready");
       await roomsApi.createRoom({ name });
     },
-    onSuccess: invalidateHouseholdData,
+    onSuccess: invalidateRoomsAndZone,
     onError: () => toast.error("Erro ao criar cômodo"),
   });
 
   const reorderRoomsMutation = useMutation({
     mutationFn: async (roomIds: string[]) => {
-      if (!roomsApi || !zonesApi) {
-        throw new Error("Household not ready");
-      }
+      if (!roomsApi || !zonesApi) throw new Error("Household not ready");
       await roomsApi.reorderRooms({ room_ids: roomIds });
       await zonesApi.getActiveZone().catch(() => null);
     },
-    onMutate: async (roomIds: string[]) => {
-      if (!activeHouseholdId) return;
-      const queryKey = ["household-data", activeHouseholdId] as const;
-      await queryClient.cancelQueries({ queryKey, exact: true });
-
-      const previous = queryClient.getQueryData<any>(queryKey);
-
-      queryClient.setQueryData(queryKey, (old: any) => {
-        if (!old) return old;
-        const positionById = new Map(roomIds.map((id, idx) => [id, idx + 1]));
-        return {
-          ...old,
-          rooms: old.rooms.map((room: any) => ({
-            ...room,
-            zone_cycle_position: positionById.get(room.id) ?? room.zone_cycle_position,
-          })),
-        };
-      });
-
-      return { previous };
-    },
-    onError: (_err, _roomIds, context) => {
-      if (context?.previous && activeHouseholdId) {
-        queryClient.setQueryData(["household-data", activeHouseholdId], context.previous);
-      }
-      toast.error("Erro ao reordenar cômodos");
-    },
-    onSuccess: invalidateHouseholdData,
+    onSuccess: invalidateRoomsAndZone,
+    onError: () => toast.error("Erro ao reordenar cômodos"),
   });
 
   const editRoomMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateRoomRequest }) => {
-      if (!roomsApi) return;
+      if (!roomsApi) throw new Error("Household not ready");
       await roomsApi.updateRoom(id, data);
     },
-    onSuccess: invalidateHouseholdData,
+    onSuccess: invalidateRoomsAndZone,
     onError: () => toast.error("Erro ao editar cômodo"),
   });
 
   const removeRoomMutation = useMutation({
     mutationFn: async (id: string) => {
-      if (!roomsApi) return;
+      if (!roomsApi) throw new Error("Household not ready");
       await roomsApi.deleteRoom(id);
     },
-    onSuccess: invalidateHouseholdData,
+    onSuccess: invalidateRoomsAndZone,
     onError: () => toast.error("Erro ao remover cômodo"),
   });
 
-  const addTaskMutation = useMutation({
+const addTaskMutation = useMutation({
     mutationFn: async (data: TaskCreate) => {
-      if (!tasksApi) return;
-      await tasksApi.createTask(data);
-      const response = await tasksApi.listTasks();
-      return response.items;
+      if (!tasksApi) throw new Error("Household not ready");
+      const created = await tasksApi.createTask(data);
+      const serverTask: TaskWithStatus = {
+        ...created,
+        is_available: true,
+        last_completion: undefined,
+      };
+      return serverTask;
     },
-    onSuccess: async (items) => {
-      syncHouseholdTasks(items);
-      await invalidateHouseholdData();
+
+    onMutate: async (data: TaskCreate) => {
+      if (!activeHouseholdId) return;
+
+      await queryClient.cancelQueries({
+        predicate: (query) =>
+          query.queryKey[0] === "tasks" && query.queryKey[1] === activeHouseholdId,
+      });
+
+      const previous = getAllTaskQueriesData(queryClient, activeHouseholdId);
+      const optimisticTask = createOptimisticTask(data, activeHouseholdId);
+
+      addOptimisticTaskToCaches(queryClient, activeHouseholdId, optimisticTask);
+
+      return { previous, optimisticTask };
     },
-    onError: () => toast.error("Erro ao criar tarefa"),
+
+    onSuccess: (serverTask, _variables, mutationContext) => {
+      if (!activeHouseholdId || !mutationContext?.optimisticTask) return;
+
+      replaceOptimisticTaskInCaches(
+        queryClient,
+        activeHouseholdId,
+        mutationContext.optimisticTask.id,
+        serverTask
+      );
+      void invalidateForTask(serverTask.room_id, serverTask.type);
+    },
+
+    onError: (_err, _variables, mutationContext) => {
+      if (!activeHouseholdId || !mutationContext) return;
+
+      const { optimisticTask } = mutationContext;
+      removeTaskFromCaches(
+        queryClient,
+        activeHouseholdId,
+        optimisticTask.id,
+        optimisticTask.type,
+        optimisticTask.room_id
+      );
+
+      toast.error("Erro ao criar tarefa");
+    },
   });
 
+
   const editTaskMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: TaskUpdate }) => {
-      if (!tasksApi) return;
+    mutationFn: async ({ id, data, context }: { id: string; data: TaskUpdate; context: TaskMutationContext }) => {
+      if (!tasksApi) throw new Error("Household not ready");
       await tasksApi.updateTask(id, data);
+      return context;
     },
-    onSuccess: invalidateHouseholdData,
+    onSuccess: ({ roomId, type }) => invalidateForTask(roomId, type),
     onError: () => toast.error("Erro ao editar tarefa"),
   });
 
   const removeTaskMutation = useMutation({
-    mutationFn: async (id: string) => {
-      if (!tasksApi) return;
+    mutationFn: async ({ id, context }: { id: string; context: TaskMutationContext }) => {
+      if (!tasksApi) throw new Error("Household not ready");
       await tasksApi.deleteTask(id);
+      return context;
     },
-    onSuccess: invalidateHouseholdData,
+    onSuccess: ({ roomId, type }) => invalidateForTask(roomId, type),
     onError: () => toast.error("Erro ao remover tarefa"),
   });
 
-  const toggleTaskStatusMutation = useMutation({
-    mutationFn: async ({ id, isAvailable }: { id: string; isAvailable: boolean }) => {
-      if (!tasksApi) return;
-
+ const toggleTaskStatusMutation = useMutation({
+    mutationFn: async ({
+      id,
+      isAvailable,
+      context,
+    }: {
+      id: string;
+      isAvailable: boolean;
+      context: TaskMutationContext;
+    }) => {
+      if (!tasksApi) throw new Error("Household not ready");
       if (isAvailable) {
         await tasksApi.completeTask(id);
-      } else if (id) {
+      } else {
         await tasksApi.uncompleteTask(id);
       }
+      return context;
     },
-    onSuccess: invalidateHouseholdData,
-    onError: () => toast.error("Erro ao atualizar tarefa"),
+
+    onMutate: async ({ id, isAvailable }) => {
+      if (!activeHouseholdId) return;
+
+      await queryClient.cancelQueries({ queryKey: taskKeys.all(activeHouseholdId) });
+
+      const previous = getAllTaskQueriesData(queryClient, activeHouseholdId);
+      const nextIsAvailable = !isAvailable;
+
+      setTaskInAllCaches(queryClient, activeHouseholdId, id, (task) => ({
+        ...task,
+        is_available: nextIsAvailable,
+        last_completion: nextIsAvailable ? undefined : task.last_completion,
+      }));
+
+      return { previous };
+    },
+
+    onSuccess: ({ roomId, type }) => invalidateForTask(roomId, type),
+
+    onError: (_err, _vars, mutationContext) => {
+      if (activeHouseholdId && mutationContext?.previous) {
+        restoreTaskQueriesData(queryClient, mutationContext.previous);
+      }
+      toast.error("Erro ao atualizar tarefa");
+    },
   });
 
   return {
@@ -162,18 +210,20 @@ export const useTaskMutations = () => {
     reorderRooms: async (roomIds: string[]) => reorderRoomsMutation.mutateAsync(roomIds),
     editRoom: async (id: string, data: UpdateRoomRequest) => editRoomMutation.mutateAsync({ id, data }),
     removeRoom: async (id: string) => removeRoomMutation.mutateAsync(id),
-    getTasks: async () => getTasksMutation.mutateAsync(),
+
     addTask: async (data: TaskCreate) => addTaskMutation.mutateAsync(data),
-    editTask: async (id: string, data: TaskUpdate) => editTaskMutation.mutateAsync({ id, data }),
-    removeTask: async (id: string) => removeTaskMutation.mutateAsync(id),
-    toggleTaskStatus: async (id: string, isAvailable: boolean) =>
-      toggleTaskStatusMutation.mutateAsync({ id, isAvailable }),
+    editTask: async (id: string, data: TaskUpdate, context: TaskMutationContext) =>
+      editTaskMutation.mutateAsync({ id, data, context }),
+    removeTask: async (id: string, context: TaskMutationContext) =>
+      removeTaskMutation.mutateAsync({ id, context }),
+    toggleTaskStatus: async (id: string, isAvailable: boolean, context: TaskMutationContext) =>
+      toggleTaskStatusMutation.mutateAsync({ id, isAvailable, context }),
+
     isLoading:
       addRoomMutation.isPending ||
       reorderRoomsMutation.isPending ||
       editRoomMutation.isPending ||
       removeRoomMutation.isPending ||
-      getTasksMutation.isPending ||
       addTaskMutation.isPending ||
       editTaskMutation.isPending ||
       removeTaskMutation.isPending ||

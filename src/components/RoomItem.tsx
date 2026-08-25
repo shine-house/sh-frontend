@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useTask } from "@/context/TaskContext";
+import { useRoomTaskCounts } from "@/features/tasks/useRoomTaskCounts";
 import type { RoomResponse } from "@/lib/api/types/room-types";
 import {
   Card,
@@ -24,13 +25,12 @@ interface RoomItemProps {
 }
 
 const RoomItem: React.FC<RoomItemProps> = ({ room, onSelect }) => {
-  const { removeRoom, editRoom, filterTasks } = useTask();
+  const { removeRoom, editRoom } = useTask();
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(room.name);
   const [isSaving, setIsSaving] = useState(false);
 
-  const zoneTasks = filterTasks(room.id, "zone");
-  const weeklyTasks = filterTasks(room.id, "weekly");
+  const { zoneCount, weeklyCount } = useRoomTaskCounts(room.id);
 
   const handleSave = async () => {
     if (!editedName.trim()) return;
@@ -44,8 +44,9 @@ const RoomItem: React.FC<RoomItemProps> = ({ room, onSelect }) => {
   };
 
   const handleDelete = () => {
-    if (zoneTasks.length > 0 || weeklyTasks.length > 0) {
-      if (!confirm(`Este cômodo tem ${zoneTasks.length + weeklyTasks.length} tarefas associadas. Deseja excluir mesmo assim?`)) {
+    const totalTasks = zoneCount + weeklyCount;
+    if (totalTasks > 0) {
+      if (!confirm(`Este cômodo tem ${totalTasks} tarefas associadas. Deseja excluir mesmo assim?`)) {
         return;
       }
     }
@@ -96,11 +97,11 @@ const RoomItem: React.FC<RoomItemProps> = ({ room, onSelect }) => {
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
             <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-950 px-2 py-1 rounded-lg border border-slate-100 dark:border-slate-800/40">
               <Home className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-              {zoneTasks.length} {zoneTasks.length === 1 ? 'tarefa' : 'tarefas'} de zona
+              {zoneCount} {zoneCount === 1 ? 'tarefa' : 'tarefas'} de zona
             </span>
             <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-950 px-2 py-1 rounded-lg border border-slate-100 dark:border-slate-800/40">
               <CalendarCheck2 className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-              {weeklyTasks.length} {weeklyTasks.length === 1 ? 'tarefa' : 'tarefas'} {weeklyTasks.length === 1 ? 'semanal' : 'semanais'}
+              {weeklyCount} {weeklyCount === 1 ? 'tarefa' : 'tarefas'} {weeklyCount === 1 ? 'semanal' : 'semanais'}
             </span>
           </div>
         </CardContent>
@@ -133,7 +134,6 @@ const RoomItem: React.FC<RoomItemProps> = ({ room, onSelect }) => {
             </div>
           </div>
 
-          {/* Rodapé do Modal */}
           <DialogFooter className="gap-2 sm:gap-0 border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
             <Button
               type="button"

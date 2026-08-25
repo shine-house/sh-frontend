@@ -32,6 +32,7 @@ interface TaskItemProps {
 
 const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
   const { toggleTaskStatus, editTask: updateTask, removeTask: deleteTask } = useTask();
+  const taskContext = { type: task.type, roomId: task.room_id };
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(task.name);
   const [editedDescription, setEditedDescription] = useState(task.description ?? "");
@@ -42,14 +43,15 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
   };
 
   const isDone = !task.is_available;
+  const isPending = task.isPending === true;
   const completedByName = task.last_completion?.user.name.split(' ')[0] || task.last_completion?.user.email.split("@")[0] || "-";
   const completedDate = formatDate(
     task.last_completion?.completed_at ?? new Date().toISOString()
   );
 
-  const handleToggleStatus = () => {
-    toggleTaskStatus(task.id);
-  };
+const handleToggleStatus = () => {
+  toggleTaskStatus(task.id, task.is_available, taskContext);
+};
 
   const handleStartEditing = () => {
     setEditedName(task.name);
@@ -65,16 +67,13 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
 
   const handleUpdateTask = () => {
     if (editedName.trim()) {
-      updateTask(task.id, {
-        name: editedName.trim(),
-        description: editedDescription.trim() || null,
-      });
+      updateTask(task.id, { name: editedName.trim(), description: editedDescription.trim() || null }, taskContext);
       setIsEditing(false);
     }
   };
 
   const handleDeleteTask = () => {
-    deleteTask(task.id);
+    deleteTask(task.id, taskContext);
     setIsDeleteDialogOpen(false);
   };
 
@@ -87,18 +86,17 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
           : "border-slate-200/70 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm"
       )}
     >
-      {/* Checkbox customizado com transição suave */}
       <div className="flex items-center h-5 mt-0.5">
         <Checkbox
           checked={isDone}
           onCheckedChange={handleToggleStatus}
+          disabled={isPending}
           className="h-4 w-4 rounded-md border-slate-300 dark:border-slate-700 data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600 dark:data-[state=checked]:bg-teal-500 dark:data-[state=checked]:border-teal-500 transition-colors"
         />
       </div>
 
       <div className="flex-1 min-w-0">
         {isEditing ? (
-          /* Modo Edição Inline Refatorado */
           <div className="space-y-3 pr-2">
             <div className="flex flex-col sm:flex-row gap-2">
               <Input
@@ -136,7 +134,6 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
             </div>
           </div>
         ) : (
-          /* Modo Visualização Refatorado */
           <div className="space-y-1">
             <span
               className={cn(
@@ -146,6 +143,12 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
             >
               {task.name}
             </span>
+            {isPending && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 dark:text-slate-500 animate-pulse">
+                <span className="h-1.5 w-1.5 rounded-full bg-teal-400 animate-ping" />
+                Salvando...
+              </span>
+            )}
 
             {task.description && (
               <p className={cn(
@@ -168,8 +171,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
         )}
       </div>
 
-      {/* Menu de Ações visível no hover em telas desktop */}
-      {!readOnly && !isEditing && (
+      {!readOnly && !isEditing && !isPending && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

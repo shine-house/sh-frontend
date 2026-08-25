@@ -47,6 +47,8 @@ completed_at: string;
 export interface TaskWithStatus extends TaskResponse {
   is_available: boolean;
   last_completion?: CompletionInfo;
+  // Client-only
+  isPending?: boolean;
 }
 
 export interface ListTaskWithStatusResponse {

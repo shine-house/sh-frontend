@@ -1,11 +1,12 @@
 import type { RoomResponse, UpdateRoomRequest } from "@/lib/api/types/room-types";
-import type { TaskWithStatus, TaskCreate, TaskUpdate } from "../../lib/api/types/task-types";
+import type { TaskCreate, TaskUpdate } from "../../lib/api/types/task-types";
 import type { TaskTypeEnum } from "../../lib/api/types/util-types";
 import type { ActiveZoneResponse } from "@/lib/api/types/zone-types";
 
+export type TaskMutationContext = { type: TaskTypeEnum; roomId: string };
+
 export type TaskContextType = {
   rooms: RoomResponse[];
-  tasks: TaskWithStatus[];
   activeZone: ActiveZoneResponse | null;
   isLoading: boolean;
   addRoom: (name: string) => Promise<void>;
@@ -13,10 +14,8 @@ export type TaskContextType = {
   removeRoom: (id: string) => Promise<void>;
   reorderRooms: (roomIds: string[]) => Promise<void>;
   addTask: (task: TaskCreate) => Promise<void>;
-  toggleTaskStatus: (id: string) => Promise<void>;
-  editTask: (id: string, data: TaskUpdate) => Promise<void>;
-  removeTask: (id: string) => Promise<void>;
-  filterTasks: (roomId?: string, type?: TaskTypeEnum) => TaskWithStatus[];
-  // getZoneCalendar: (weeks: number) => Array<{ date: Date; roomId: string | null }>;
+  toggleTaskStatus: (id: string, isAvailable: boolean, context: TaskMutationContext) => Promise<void>;
+  editTask: (id: string, data: TaskUpdate, context: TaskMutationContext) => Promise<void>;
+  removeTask: (id: string, context: TaskMutationContext) => Promise<void>;
   refetch: () => Promise<void>;
 };

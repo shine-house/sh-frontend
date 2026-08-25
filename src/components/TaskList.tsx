@@ -21,6 +21,8 @@ import {
 import { Plus, Inbox, AlertCircle } from "lucide-react";
 import type { TaskTypeEnum } from "@/lib/api/types/util-types";
 import type { LucideIcon } from "lucide-react";
+import { useTasksQuery } from "@/features/tasks/useTasksQuery";
+import { DEFAULT_PAGE, DEFAULT_SIZE } from "@/lib/queryKeys/taskKeys";
 
 interface TaskListProps {
   type: TaskTypeEnum;
@@ -32,7 +34,9 @@ interface TaskListProps {
 
 const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, readOnly = false }) => {
 
-  const { filterTasks, addTask, rooms } = useTask();
+  const { addTask, rooms } = useTask();
+  const [page, setPage] = useState(DEFAULT_PAGE);
+  const { tasks, metadata, isFetching } = useTasksQuery({ roomId, type, page, size: DEFAULT_SIZE });
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskName, setNewTaskName] = useState("");
   const [newTaskDescription, setNewTaskDescription] = useState("");
@@ -45,9 +49,7 @@ const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, re
     setRoomError(null);
   }, [roomId]);
 
-  const tasks = filterTasks(roomId, type);
-
-  const handleAddTask = async () => {
+  const handleAddTask = () => {
     if (!newTaskName.trim()) return;
 
     const targetRoomId = roomId ?? newTaskRoomId;
@@ -57,22 +59,18 @@ const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, re
       return;
     }
 
-    try {
-      await addTask({
-        name: newTaskName,
-        description: newTaskDescription || undefined,
-        type,
-        room_id: targetRoomId,
-      });
+    void addTask({
+      name: newTaskName,
+      description: newTaskDescription || undefined,
+      type,
+      room_id: targetRoomId,
+    });
 
-      setNewTaskName("");
-      setNewTaskDescription("");
-      setNewTaskRoomId(targetRoomId);
-      setRoomError(null);
-      setIsAddingTask(false);
-    } catch (error) {
-      console.error("Erro ao criar tarefa:", error);
-    }
+    setNewTaskName("");
+    setNewTaskDescription("");
+    setNewTaskRoomId(targetRoomId);
+    setRoomError(null);
+    setIsAddingTask(false);
   };
 
   const handleCancel = () => {
@@ -86,7 +84,19 @@ const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, re
 
   return (
     <div className="space-y-4">
-      {/* Cabeçalho da Lista */}
+      {metadata && metadata.total_pages > 1 && (
+        <div className="flex justify-between items-center pt-2">
+          <Button size="sm" variant="outline" disabled={!metadata.has_previous || isFetching}
+            onClick={() => setPage((p) => p - 1)}>
+            Anterior
+          </Button>
+          <span className="text-xs text-slate-400">Página {metadata.page} de {metadata.total_pages}</span>
+          <Button size="sm" variant="outline" disabled={!metadata.has_next || isFetching}
+            onClick={() => setPage((p) => p + 1)}>
+            Próxima
+          </Button>
+        </div>
+      )}
       <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
         <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight text-slate-800 dark:text-slate-200">
           {Icon && <Icon size={20} />}
@@ -137,7 +147,6 @@ const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, re
           </DialogHeader>
 
           <div className="space-y-4 py-3">
-            {/* Campo Nome */}
             <div className="space-y-1.5">
               <label htmlFor="task-name" className="text-xs font-semibold tracking-wide uppercase text-slate-500 dark:text-slate-400">
                 Nome da tarefa
@@ -151,7 +160,6 @@ const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, re
               />
             </div>
 
-            {/* Campo Descrição */}
             <div className="space-y-1.5">
               <label htmlFor="task-description" className="text-xs font-semibold tracking-wide uppercase text-slate-500 dark:text-slate-400">
                 Descrição <span className="text-slate-400 font-normal">(opcional)</span>

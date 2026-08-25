@@ -77,7 +77,6 @@ const RoomDetailPage = () => {
           </Alert>
         )}
 
-        {/* Sistema de Abas Internas Estilizadas em Pílulas */}
         <Tabs defaultValue="zone" className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-slate-100 dark:bg-slate-950 rounded-xl p-1 h-10 border border-slate-200/20 dark:border-slate-800/40">
             <TabsTrigger

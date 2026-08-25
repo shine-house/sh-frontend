@@ -1,49 +1,39 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
-import { createTasksApi } from "@/lib/api/tasks";
 import { createRoomsApi } from "@/lib/api/rooms";
 import { createZonesApi } from "@/lib/api/zones";
 import { ApiError } from "@/lib/api/client";
-import type { ActiveZoneResponse } from "@/lib/api/types/zone-types";
+import { householdKeys } from "@/lib/queryKeys/householdKeys";
 
 export const useHouseholdData = () => {
   const { user, activeHouseholdId, isLoading: authLoading, logout } = useAuth();
 
-  const tasksApi = activeHouseholdId ? createTasksApi(activeHouseholdId) : null;
   const roomsApi = activeHouseholdId ? createRoomsApi(activeHouseholdId) : null;
   const zonesApi = activeHouseholdId ? createZonesApi(activeHouseholdId) : null;
 
-  const fetchAll = async () => {
-    if (!roomsApi || !tasksApi || !zonesApi) {
-      return { rooms: [], tasks: [], activeZone: null as ActiveZoneResponse | null };
+  const fetchRoomsAndZone = async () => {
+    if (!roomsApi || !zonesApi) {
+      return { rooms: [], activeZone: null };
     }
-
     try {
-      const [roomsRes, tasksRes, zoneRes] = await Promise.all([
+      const [roomsRes, zoneRes] = await Promise.all([
         roomsApi.listRooms(),
-        tasksApi.listTasks(),
         zonesApi.getActiveZone().catch(() => null),
       ]);
-
-      return {
-        rooms: roomsRes.items,
-        tasks: tasksRes.items,
-        activeZone: zoneRes ?? null,
-      };
+      return { rooms: roomsRes.items, activeZone: zoneRes ?? null };
     } catch (error) {
       if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
         await logout();
-        return { rooms: [], tasks: [], activeZone: null as ActiveZoneResponse | null };
+        return { rooms: [], activeZone: null };
       }
       throw error;
     }
   };
 
-  const householdQueryKey = ["household-data", activeHouseholdId] as const;
-
-  const householdQuery = useQuery({
-    queryKey: householdQueryKey,
-    queryFn: fetchAll,
+  const query = useQuery({
+    // NOTE: rooms + activeZone stay combined — they're small, unpaginated, and consumed together everywhere.
+    queryKey: activeHouseholdId ? [...householdKeys.rooms(activeHouseholdId), "with-zone"] : ["rooms", "disabled"],
+    queryFn: fetchRoomsAndZone,
     enabled: !!user && !!activeHouseholdId && !authLoading,
     staleTime: 60_000,
     gcTime: 5 * 60_000,
@@ -53,11 +43,9 @@ export const useHouseholdData = () => {
   });
 
   return {
-    rooms: householdQuery.data?.rooms ?? [],
-    tasks: householdQuery.data?.tasks ?? [],
-    activeZone: householdQuery.data?.activeZone ?? null,
-    isLoading: authLoading || householdQuery.isLoading,
-    refetch: householdQuery.refetch,
-    queryKey: householdQueryKey,
+    rooms: query.data?.rooms ?? [],
+    activeZone: query.data?.activeZone ?? null,
+    isLoading: authLoading || query.isLoading,
+    refetch: query.refetch,
   };
 };

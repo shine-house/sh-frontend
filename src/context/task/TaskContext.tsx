@@ -1,13 +1,12 @@
-import React, { createContext, useContext, useCallback } from "react";
+import React, { createContext, useContext } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useHouseholdData } from "@/features/household/useHouseholdData";
 import { useTaskMutations } from "@/features/tasks/useTaskMutations";
 
 import type { UpdateRoomRequest } from "@/lib/api/types/room-types";
-import type { TaskCreate, TaskUpdate, TaskWithStatus } from "../../lib/api/types/task-types";
+import type { TaskCreate, TaskUpdate } from "../../lib/api/types/task-types";
 import type { TaskTypeEnum } from "../../lib/api/types/util-types";
 import type { TaskContextType } from "./types";
-import { getStartOfWeek, addDays } from "./taskUtils";
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
@@ -33,7 +32,10 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isLoading: mutationsLoading,
   } = useTaskMutations();
 
-  const { rooms, tasks, activeZone, isLoading: householdLoading, refetch } = useHouseholdData();
+  // NOTE: tasks are no longer fetched here — each consumer fetches its own
+  // paginated/filtered slice via useTasksQuery. This context only owns
+  // rooms + activeZone (small, unpaginated, shared everywhere) plus mutations.
+  const { rooms, activeZone, isLoading: householdLoading, refetch } = useHouseholdData();
   const isLoading = householdLoading || mutationsLoading;
 
   const refetchSafe = async () => {
@@ -60,56 +62,27 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await addTaskMutation(data);
   };
 
-  const editTask = async (id: string, data: TaskUpdate) => {
-    await editTaskMutation(id, data);
+  const editTask = async (id: string, data: TaskUpdate, context: { type: TaskTypeEnum; roomId: string }) => {
+    await editTaskMutation(id, data, context);
   };
 
-  const removeTask = async (id: string) => {
-    await removeTaskMutation(id);
+  const removeTask = async (id: string, context: { type: TaskTypeEnum; roomId: string }) => {
+    await removeTaskMutation(id, context);
   };
 
-  const toggleTaskStatus = async (id: string) => {
-    const task = tasks.find((t) => t.id === id);
-    if (!task) return;
 
-    await toggleTaskStatusMutation(id, task.is_available);
+  const toggleTaskStatus = async (
+    id: string,
+    isAvailable: boolean,
+    context: { type: TaskTypeEnum; roomId: string }
+  ) => {
+    await toggleTaskStatusMutation(id, isAvailable, context);
   };
-
-  const filterTasks = useCallback(
-    (roomId?: string, type?: TaskTypeEnum): TaskWithStatus[] => {
-      return tasks
-        .filter((t) => (roomId ? t.room_id === roomId : true) && (type ? t.type === type : true))
-        .sort((a, b) => a.sort_order - b.sort_order);
-    },
-    [tasks]
-  );
-
-  // const getZoneCalendar = useCallback(
-  //   (weeks: number) => {
-  //     const calendar: Array<{ date: Date; roomId: string | null }> = [];
-  //     if (!activeZone || rooms.length === 0) return calendar;
-
-  //     const cycleLength = activeZone.cycle_length;
-  //     let date = getStartOfWeek(new Date(activeZone.period_start_date));
-  //     let position = activeZone.cycle_position;
-
-  //     for (let i = 0; i < weeks; i++) {
-  //       const room = rooms.find((r) => r.zone_cycle_position === position) ?? null;
-  //       calendar.push({ date: new Date(date), roomId: room?.id ?? null });
-  //       date = addDays(date, 7);
-  //       position = (position % cycleLength) + 1;
-  //     }
-
-  //     return calendar;
-  //   },
-  //   [activeZone, rooms]
-  // );
 
   return (
     <TaskContext.Provider
       value={{
         rooms,
-        tasks,
         activeZone,
         isLoading,
         reorderRooms,
@@ -120,8 +93,6 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         toggleTaskStatus,
         editTask,
         removeTask,
-        filterTasks,
-        // getZoneCalendar,
         refetch: refetchSafe,
       }}
     >
