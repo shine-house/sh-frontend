@@ -1,30 +1,50 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useTask } from "@/context/TaskContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUp, ArrowDown, Save, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const ZoneCycle: React.FC = () => {
   const { rooms, activeZone, reorderRooms } = useTask();
 
-  const orderedRooms = [...rooms].sort(
-    (a, b) => a.zone_cycle_position - b.zone_cycle_position
-  );
+  const [localRooms, setLocalRooms] = useState([...rooms]);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const moveRoom = async (index: number, direction: "up" | "down") => {
+  useEffect(() => {
+    const sorted = [...rooms].sort(
+      (a, b) => a.zone_cycle_position - b.zone_cycle_position
+    );
+    setLocalRooms(sorted);
+  }, [rooms]);
+
+  // Altera a ordem apenas na interface (estado local)
+  const moveRoom = (index: number, direction: "up" | "down") => {
     const targetIndex = direction === "up" ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= orderedRooms.length) return;
+    if (targetIndex < 0 || targetIndex >= localRooms.length) return;
 
-    const reordered = [...orderedRooms];
+    const reordered = [...localRooms];
     [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
 
+    setLocalRooms(reordered);
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
     try {
-      await reorderRooms(reordered.map((r) => r.id));
-    } catch {
-      // rollback already handled by the mutation's onError
+      await reorderRooms(localRooms.map((r) => r.id));
+    } catch (error) {
+      toast.error("Erro ao salvar ordenação!")
+      console.error("Erro ao salvar ordenação:", error);
+      setLocalRooms([...rooms].sort((a, b) => a.zone_cycle_position - b.zone_cycle_position));
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  const hasChanges = JSON.stringify(localRooms.map(r => r.id)) !==
+                     JSON.stringify([...rooms].sort((a, b) => a.zone_cycle_position - b.zone_cycle_position).map(r => r.id));
 
   return (
     <div className="space-y-8">
@@ -32,19 +52,46 @@ const ZoneCycle: React.FC = () => {
       {/* Seção 1: Ordem do Ciclo de Zonas */}
       <div className="space-y-4">
         <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
-          <h2 className="text-base font-semibold tracking-tight text-slate-800 dark:text-slate-200">
-            Ordem do Ciclo de Zonas
-          </h2>
-          {activeZone && (
-            <Badge variant="outline" className="bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20 rounded-lg px-2.5 py-0.5 text-xs font-semibold">
-              Zona atual: {activeZone.room_name}
-            </Badge>
-          )}
+          <div className="space-y-1">
+            <h2 className="text-base font-semibold tracking-tight text-slate-800 dark:text-slate-200">
+              Ordem do Ciclo de Zonas
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Altere a ordem e clique em salvar para aplicar.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {activeZone && (
+              <Badge variant="outline" className="bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20 rounded-lg px-2.5 py-0.5 text-xs font-semibold">
+                Zona atual: {activeZone.room_name}
+              </Badge>
+            )}
+
+            {/* Botão de Salvar Condicional */}
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={!hasChanges || isSaving}
+              className={cn(
+                "transition-all duration-200 gap-1.5 shadow-sm rounded-lg text-xs font-medium",
+                hasChanges
+                  ? "bg-teal-600 hover:bg-teal-700 text-white"
+                  : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500"
+              )}
+            >
+              {isSaving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Save className="h-3.5 w-3.5" />
+              )}
+              {isSaving ? "Salvando..." : "Salvar ordem"}
+            </Button>
+          </div>
         </div>
 
-        {/* Lista de Organização de Fila Refatorada */}
+        {/* Lista de Organização de Fila */}
         <div className="space-y-2">
-          {orderedRooms.map((room, index) => {
+          {localRooms.map((room, index) => {
             const isCurrentZone = room.id === activeZone?.room_id;
             return (
               <div
@@ -74,7 +121,7 @@ const ZoneCycle: React.FC = () => {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none"
-                    disabled={index === 0}
+                    disabled={index === 0 || isSaving}
                     onClick={() => moveRoom(index, "up")}
                     title="Subir prioridade"
                   >
@@ -84,7 +131,7 @@ const ZoneCycle: React.FC = () => {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none"
-                    disabled={index === orderedRooms.length - 1}
+                    disabled={index === localRooms.length - 1 || isSaving}
                     onClick={() => moveRoom(index, "down")}
                     title="Baixar prioridade"
                   >

@@ -23,6 +23,29 @@ export const useTaskMutations = () => {
     });
   };
 
+  const syncHouseholdTasks = (items?: any[]) => {
+    if (!activeHouseholdId) return;
+    const safeItems = items ?? [];
+
+    queryClient.setQueryData(["household-data", activeHouseholdId], (old: any) => {
+      if (!old) return { rooms: [], tasks: safeItems, activeZone: null };
+      return { ...old, tasks: safeItems };
+    });
+  };
+
+  const getTasksMutation = useMutation({
+    mutationFn: async () => {
+      if (!tasksApi) return [];
+      const response = await tasksApi.listTasks();
+      return response.items;
+    },
+    onSuccess: async (items) => {
+      syncHouseholdTasks(items);
+      await invalidateHouseholdData();
+    },
+    onError: () => toast.error("Erro ao carregar tarefas"),
+  });
+
   const addRoomMutation = useMutation({
     mutationFn: async (name: string) => {
       if (!roomsApi) return;
@@ -32,7 +55,7 @@ export const useTaskMutations = () => {
     onError: () => toast.error("Erro ao criar cômodo"),
   });
 
-    const reorderRoomsMutation = useMutation({
+  const reorderRoomsMutation = useMutation({
     mutationFn: async (roomIds: string[]) => {
       if (!roomsApi || !zonesApi) {
         throw new Error("Household not ready");
@@ -92,8 +115,13 @@ export const useTaskMutations = () => {
     mutationFn: async (data: TaskCreate) => {
       if (!tasksApi) return;
       await tasksApi.createTask(data);
+      const response = await tasksApi.listTasks();
+      return response.items;
     },
-    onSuccess: invalidateHouseholdData,
+    onSuccess: async (items) => {
+      syncHouseholdTasks(items);
+      await invalidateHouseholdData();
+    },
     onError: () => toast.error("Erro ao criar tarefa"),
   });
 
@@ -116,7 +144,7 @@ export const useTaskMutations = () => {
   });
 
   const toggleTaskStatusMutation = useMutation({
-    mutationFn: async ({ id, isAvailable}: { id: string; isAvailable: boolean}) => {
+    mutationFn: async ({ id, isAvailable }: { id: string; isAvailable: boolean }) => {
       if (!tasksApi) return;
 
       if (isAvailable) {
@@ -134,16 +162,18 @@ export const useTaskMutations = () => {
     reorderRooms: async (roomIds: string[]) => reorderRoomsMutation.mutateAsync(roomIds),
     editRoom: async (id: string, data: UpdateRoomRequest) => editRoomMutation.mutateAsync({ id, data }),
     removeRoom: async (id: string) => removeRoomMutation.mutateAsync(id),
+    getTasks: async () => getTasksMutation.mutateAsync(),
     addTask: async (data: TaskCreate) => addTaskMutation.mutateAsync(data),
     editTask: async (id: string, data: TaskUpdate) => editTaskMutation.mutateAsync({ id, data }),
     removeTask: async (id: string) => removeTaskMutation.mutateAsync(id),
     toggleTaskStatus: async (id: string, isAvailable: boolean) =>
-      toggleTaskStatusMutation.mutateAsync({ id, isAvailable}),
+      toggleTaskStatusMutation.mutateAsync({ id, isAvailable }),
     isLoading:
       addRoomMutation.isPending ||
       reorderRoomsMutation.isPending ||
       editRoomMutation.isPending ||
       removeRoomMutation.isPending ||
+      getTasksMutation.isPending ||
       addTaskMutation.isPending ||
       editTaskMutation.isPending ||
       removeTaskMutation.isPending ||

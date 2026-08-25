@@ -8,7 +8,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Timer, Pause, Play, Calendar, RotateCcw, House, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTask } from "@/context/TaskContext";
-import { House01Icon } from "@hugeicons/core-free-icons";
 
 const TodayPage = () => {
   const [timerActive, setTimerActive] = useState(false);

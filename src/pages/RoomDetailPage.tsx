@@ -7,8 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Calendar, Sparkles, Inbox, ArrowLeft, House, Calendar1 } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { getNextDay } from "@/lib/utils";
+
 
 const RoomDetailPage = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -18,7 +18,6 @@ const RoomDetailPage = () => {
   const room = rooms.find(r => r.id === roomId);
   const isCurrentZone = activeZone?.room_id === roomId;
 
-  // Tela de Tratamento Visual para Cômodo Não Encontrado
   if (!room) {
     return (
       <div className="flex flex-col min-h-screen bg-slate-50/50 dark:bg-slate-950 transition-colors duration-300">
@@ -72,7 +71,7 @@ const RoomDetailPage = () => {
               <span className="font-bold text-sm tracking-tight block">⭐ Este é o cômodo em foco nesta semana!</span>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
                 <Sparkles className="h-3 w-3 text-teal-500" />
-                A zona mudará em: {format(new Date(activeZone.period_end_date), "dd 'de' MMMM", { locale: ptBR })}
+                A zona mudará em: {getNextDay(activeZone.period_end_date)}
               </p>
             </AlertDescription>
           </Alert>

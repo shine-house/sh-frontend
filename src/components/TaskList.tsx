@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTask } from "@/context/TaskContext";
 import TaskItem from "./TaskItem";
 import { Button } from "@/components/ui/button";
@@ -39,34 +39,47 @@ const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, re
   const [newTaskRoomId, setNewTaskRoomId] = useState(roomId ?? "");
   const [roomError, setRoomError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const nextRoomId = roomId ?? "";
+    setNewTaskRoomId(nextRoomId);
+    setRoomError(null);
+  }, [roomId]);
+
   const tasks = filterTasks(roomId, type);
 
-  const handleAddTask = () => {
+  const handleAddTask = async () => {
     if (!newTaskName.trim()) return;
 
-    if (!newTaskRoomId) {
+    const targetRoomId = roomId ?? newTaskRoomId;
+
+    if (!targetRoomId) {
       setRoomError("Selecione um cômodo para a tarefa");
       return;
     }
 
-    addTask({
-      name: newTaskName,
-      description: newTaskDescription || undefined,
-      type,
-      room_id: newTaskRoomId,
-    });
+    try {
+      await addTask({
+        name: newTaskName,
+        description: newTaskDescription || undefined,
+        type,
+        room_id: targetRoomId,
+      });
 
-    setNewTaskName("");
-    setNewTaskDescription("");
-    setNewTaskRoomId(roomId ?? "");
-    setRoomError(null);
-    setIsAddingTask(false);
+      setNewTaskName("");
+      setNewTaskDescription("");
+      setNewTaskRoomId(targetRoomId);
+      setRoomError(null);
+      setIsAddingTask(false);
+    } catch (error) {
+      console.error("Erro ao criar tarefa:", error);
+    }
   };
 
   const handleCancel = () => {
+    const nextRoomId = roomId ?? "";
     setNewTaskName("");
     setNewTaskDescription("");
-    setNewTaskRoomId(roomId ?? "");
+    setNewTaskRoomId(nextRoomId);
     setRoomError(null);
     setIsAddingTask(false);
   };

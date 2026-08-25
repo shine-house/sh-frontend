@@ -13,8 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Calendar, Clock, Sparkles } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { addDays, parse, format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { getNextDay } from "@/lib/utils";
+
 
 const ListsPage = () => {
   const { isAuthenticated } = useAuth();
@@ -29,17 +29,6 @@ const ListsPage = () => {
     }
   }, []);
 
-  const getNextDay = (endDate: string) => {
-
-  return format(
-    addDays(
-      parse(endDate, "yyyy-MM-dd", new Date()),
-      1
-    ),
-    "dd 'de' MMMM",
-    { locale: ptBR }
-  )
-}
 
   const handleCompleteOnboarding = () => {
     localStorage.setItem("shine-house-onboarding-complete", "true");
@@ -70,7 +59,7 @@ const ListsPage = () => {
                     size="sm"
                     className="shrink-0 self-end sm:self-auto h-8 text-xs font-semibold rounded-xl bg-amber-600 hover:bg-amber-700 text-white dark:bg-amber-500/20 dark:text-amber-300 dark:hover:bg-amber-500/30 border-none transition-all shadow-sm active:scale-95"
                   >
-                    Criar Conta
+                    Entar / Criar Conta
                   </Button>
                 }
               />
@@ -139,7 +128,7 @@ const ListsPage = () => {
             value="calendar"
             className="pt-1 focus-visible:outline-none focus-visible:ring-0">
             <div className="bg-white dark:bg-slate-900/60 p-4 sm:p-5 border border-slate-200/50 dark:border-slate-800/50 rounded-2xl shadow-sm animate-in fade-in-50 duration-200">
-              <ZoneCycle/>
+              <ZoneCycle />
             </div>
           </TabsContent>
         </Tabs>
