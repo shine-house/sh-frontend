@@ -4,11 +4,15 @@
 - [ ] Adicionar suporte a paginação para tarefas e comodos
 - [ ] invalidar query de get current zone, aorenomear uma zone
 - [ ] Criarmodal de confirmação de remoção de usuárioo da lista
-- [ ] verificar demora na toglle das tasks
-- [ ] Ao criar uma tarefa dentro de uma zona,a zona não recarrega com a nova tarefa (invalidet query??)
-- [ ] auth/login quando da 401 não exibe o erro, ao logar e sim carrega a tela
-- [ ] Tela de caléndario não esta funcioanndo para reordenar comodos e nem exibindo a zona da semana correta, hoje 24/08 zona Sala, verificar semana que vem
 - [ ] mensagem de crendenciais inválidas, melhorar
 - [ ] mensagem de colocar um email, melhorar
 - [ ] loading na criação de tasks dentro de rooms
 - [ ] melhorar loading
+
+
+--------
+- [ ] Melhorar loading no today page
+- [ ] Loading ao excluir uma tarefa
+- [ ] Poder editar o tipo de uma tarefa, daily/weely
+- [ ] Loading ao ver detalhes do comodo
+- [ ] Verificartarefas semanais marcadas 3x
