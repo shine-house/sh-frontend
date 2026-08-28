@@ -42,19 +42,8 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
       if (!prev) {
         return prev;
       }
-
-      return {
-        ...prev,
-        active_household_id: householdId,
-      };
+      return { ...prev, active_household_id: householdId };
     });
-
-    if (householdId) {
-      localStorage.setItem("sh_active_household", householdId);
-      return;
-    }
-
-    localStorage.removeItem("sh_active_household");
   }, [queryClient, user]);
 
   const [inviteCode, setInviteCode] = useState<string | null>(null);
@@ -155,6 +144,8 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
       const result = await shareApi.joinHouseholdByInviteCode(joinCode.trim());
       updateActiveHousehold(result.household_id);
       await queryClient.invalidateQueries({ queryKey: ["household"] });
+      await queryClient.invalidateQueries({ queryKey: ["rooms"] });
+      await queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
       await queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
       await refetchMembers();
       toast.success(result.message);

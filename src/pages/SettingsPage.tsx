@@ -31,11 +31,16 @@ const SettingsPage = () => {
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
   const [isOnboardingResetDialogOpen, setIsOnboardingResetDialogOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    toast.info("Você saiu da sua conta");
-    setIsLogoutDialogOpen(false);
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.info("Você saiu da sua conta");
+    } catch {
+      toast.error("Erro ao sair da conta. Tente novamente.");
+    } finally {
+      setIsLogoutDialogOpen(false);
+      navigate("/");
+    }
   };
 
   const handleResetOnboarding = () => {

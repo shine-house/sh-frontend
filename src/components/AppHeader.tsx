@@ -36,9 +36,13 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   const [isSharingDialogOpen, setIsSharingDialogOpen] = useState(false);
   const { isShared } = useHousehold();
 
-  const handleLogout = () => {
-    logout();
-    toast.info("Você saiu da sua conta");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.info("Você saiu da sua conta");
+    } catch {
+      toast.error("Erro ao sair da conta. Tente novamente.");
+    }
   };
 
   const handleEnableNotifications = () => {

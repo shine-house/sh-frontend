@@ -1,5 +1,4 @@
-
-import React, { createContext, useContext, useEffect } from "react";
+import React, { createContext, useContext } from "react";
 import type { UserResponse } from "@/lib/api/types/user-types";
 import { useAuthSession } from "@/features/auth/useAuthSession";
 import { useAuthMutations } from "@/features/auth/useAuthMutations";
@@ -26,41 +25,15 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const USER_KEY = "sh_user";
-  const HOUSEHOLD_KEY = "sh_active_household";
   const { login, register, logout, isLoading: mutationsLoading } = useAuthMutations();
   const sessionQuery = useAuthSession();
 
   const user = sessionQuery.data?.user ?? null;
   const activeHouseholdId = sessionQuery.data?.active_household_id ?? null;
 
-  useEffect(() => {
-    if (sessionQuery.data?.user) {
-      localStorage.setItem(USER_KEY, JSON.stringify(sessionQuery.data.user));
-
-      if (sessionQuery.data.active_household_id) {
-        localStorage.setItem(HOUSEHOLD_KEY, sessionQuery.data.active_household_id);
-      } else {
-        localStorage.removeItem(HOUSEHOLD_KEY);
-      }
-      return;
-    }
-
-    localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(HOUSEHOLD_KEY);
-  }, [sessionQuery.data]);
-
-  const isBootstrapping = sessionQuery.isLoading;
-
-  if (isBootstrapping) {
-    return <CleaningLoader />
+  if (sessionQuery.isLoading) {
+    return <CleaningLoader />;
   }
-
-  // const isLoading = sessionQuery.isLoading || mutationsLoading;
-
-  // if (isLoading) {
-  //   return <CleaningLoader />
-  // }
 
   return (
     <AuthContext.Provider

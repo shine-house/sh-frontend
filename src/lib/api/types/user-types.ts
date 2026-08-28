@@ -46,8 +46,3 @@ export interface AuthMeResponse {
   active_household_id: string | null;
 }
 
-export interface LoginResponse extends AuthMeResponse {
-  access_token: string;
-  refresh_token: string;
-  token_type: string;
-}
