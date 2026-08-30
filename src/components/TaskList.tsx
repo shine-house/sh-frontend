@@ -102,7 +102,7 @@ const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, re
 
   return (
     <div className="space-y-4">
-      
+
       {metadata && metadata.total_pages > 1 && (
         <PaginationControls
           page={metadata.page}
@@ -116,23 +116,6 @@ const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, re
           onSizeChange={handleSizeChange}
         />
       )}
-      {metadata && metadata.total_pages > 1 && (
-        <div className="flex justify-between items-center pt-2">
-          <Button size="sm" variant="outline" disabled={!metadata.has_previous || isFetching}
-            className="rounded-xl h-8 text-xs font-semibold px-3"
-            onClick={() => setPage((p) => p - 1)}>
-            Anterior
-          </Button>
-          <span className="text-xs text-slate-400 font-medium">Página {metadata.page} de {metadata.total_pages}</span>
-          <Button size="sm" variant="outline" disabled={!metadata.has_next || isFetching}
-            className="rounded-xl h-8 text-xs font-semibold px-3"
-            onClick={() => setPage((p) => p + 1)}>
-            Próxima
-          </Button>
-        </div>
-      )}
-
-      {/* Cabeçalho da Lista */}
       <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
         <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight text-slate-800 dark:text-slate-200">
           {Icon && <Icon size={20} className="text-slate-500 dark:text-slate-400" />}
