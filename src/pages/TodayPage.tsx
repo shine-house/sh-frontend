@@ -5,9 +5,10 @@ import TaskList from "@/components/TaskList";
 import GuestModeNotice from "@/components/GuestModeNotice";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Timer, Pause, Play, Calendar, RotateCcw, House, Clock } from "lucide-react";
+import { Timer, Pause, Play, Calendar, RotateCcw, House, Clock, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTask } from "@/context/TaskContext";
+import { cn } from "@/lib/utils";
 
 const TodayPage = () => {
   const [timerActive, setTimerActive] = useState(false);
@@ -72,7 +73,6 @@ const TodayPage = () => {
     <div className="flex flex-col min-h-screen bg-slate-50/50 dark:bg-slate-950">
       <AppHeader title="Hoje" />
 
-      {/* BARRA DE PROGRESSO GLOBAL: Corre no topo discretamente sempre que houver qualquer mutação de carregamento */}
       <div className="sticky top-[57px] left-0 right-0 h-[2.5px] w-full bg-transparent z-40 overflow-hidden">
         {isLoading && (
           <div className="h-full w-full bg-teal-500 animate-in fade-in duration-200">
@@ -101,7 +101,6 @@ const TodayPage = () => {
           </Alert>
         )}
 
-        {/* Bloco do Timer */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm transition-all duration-300 hover:shadow-md">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
@@ -154,33 +153,55 @@ const TodayPage = () => {
           </div>
         </div>
 
-        {/* Seções de Listas Estabilizadas (Nenhuma pisca ou some mais!) */}
         <div className="space-y-6">
-          <section className="bg-white dark:bg-slate-900/60 p-4 sm:p-5 border border-slate-200/50 dark:border-slate-800/50 rounded-2xl shadow-sm">
-            <TaskList
-             type="daily"
-             icon={Clock}
-             title=" Tarefas Diárias"
-             readOnly={true} />
+          <section className="relative overflow-hidden bg-white dark:bg-slate-900/60 p-4 sm:p-5 border border-slate-200/50 dark:border-slate-800/50 rounded-2xl shadow-sm">
+            <div className={cn("transition-opacity duration-300", isLoading && "opacity-40 pointer-events-none")}>
+              <TaskList
+                type="daily"
+                icon={Clock}
+                title=" Tarefas Diárias"
+                readOnly={true}
+              />
+            </div>
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/10 dark:bg-slate-900/10 backdrop-blur-[1px] animate-in fade-in duration-200">
+                <Loader2 className="h-6 w-6 text-teal-600 dark:text-teal-400 animate-spin" />
+              </div>
+            )}
           </section>
 
-          <section className="bg-white dark:bg-slate-900/60 p-4 sm:p-5 border border-slate-200/50 dark:border-slate-800/50 rounded-2xl shadow-sm">
-            <TaskList
-             type="weekly"
-             icon={Calendar}
-             title="Tarefas Semanais"
-             readOnly={true} />
+          <section className="relative overflow-hidden bg-white dark:bg-slate-900/60 p-4 sm:p-5 border border-slate-200/50 dark:border-slate-800/50 rounded-2xl shadow-sm">
+            <div className={cn("transition-opacity duration-300", isLoading && "opacity-40 pointer-events-none")}>
+              <TaskList
+                type="weekly"
+                icon={Calendar}
+                title="Tarefas Semanais"
+                readOnly={true}
+              />
+            </div>
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/10 dark:bg-slate-900/10 backdrop-blur-[1px] animate-in fade-in duration-200">
+                <Loader2 className="h-6 w-6 text-teal-600 dark:text-teal-400 animate-spin" />
+              </div>
+            )}
           </section>
 
           {activeZone && (
-            <section className="bg-white dark:bg-slate-900/60 p-4 sm:p-5 border border-slate-200/50 dark:border-slate-800/50 rounded-2xl shadow-sm">
-              <TaskList
-                type="zone"
-                icon={House}
-                roomId={activeZone.room_id}
-                title={`Tarefas da Zona: ${activeZone.room_name}`}
-                readOnly={true}
-              />
+            <section className="relative overflow-hidden bg-white dark:bg-slate-900/60 p-4 sm:p-5 border border-slate-200/50 dark:border-slate-800/50 rounded-2xl shadow-sm">
+              <div className={cn("transition-opacity duration-300", isLoading && "opacity-40 pointer-events-none")}>
+                <TaskList
+                  type="zone"
+                  icon={House}
+                  roomId={activeZone.room_id}
+                  title={`Tarefas da Zona: ${activeZone.room_name}`}
+                  readOnly={true}
+                />
+              </div>
+              {isLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white/10 dark:bg-slate-900/10 backdrop-blur-[1px] animate-in fade-in duration-200">
+                  <Loader2 className="h-6 w-6 text-teal-600 dark:text-teal-400 animate-spin" />
+                </div>
+              )}
             </section>
           )}
         </div>

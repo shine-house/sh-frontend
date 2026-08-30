@@ -18,11 +18,12 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { Plus, Inbox, AlertCircle } from "lucide-react";
+import { Plus, Inbox, AlertCircle, Loader2 } from "lucide-react";
 import type { TaskTypeEnum } from "@/lib/api/types/util-types";
 import type { LucideIcon } from "lucide-react";
 import { useTasksQuery } from "@/features/tasks/useTasksQuery";
 import { DEFAULT_PAGE, DEFAULT_SIZE } from "@/lib/queryKeys/taskKeys";
+import { cn } from "@/lib/utils";
 
 interface TaskListProps {
   type: TaskTypeEnum;
@@ -33,10 +34,12 @@ interface TaskListProps {
 }
 
 const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, readOnly = false }) => {
-
   const { addTask, rooms } = useTask();
   const [page, setPage] = useState(DEFAULT_PAGE);
-  const { tasks, metadata, isFetching } = useTasksQuery({ roomId, type, page, size: DEFAULT_SIZE });
+
+  // Capturando também o isLoading para a primeira busca da query
+  const { tasks, metadata, isFetching, isLoading } = useTasksQuery({ roomId, type, page, size: DEFAULT_SIZE });
+
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskName, setNewTaskName] = useState("");
   const [newTaskDescription, setNewTaskDescription] = useState("");
@@ -84,28 +87,34 @@ const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, re
 
   return (
     <div className="space-y-4">
+      {/* Paginação */}
       {metadata && metadata.total_pages > 1 && (
         <div className="flex justify-between items-center pt-2">
           <Button size="sm" variant="outline" disabled={!metadata.has_previous || isFetching}
+            className="rounded-xl h-8 text-xs font-semibold px-3"
             onClick={() => setPage((p) => p - 1)}>
             Anterior
           </Button>
-          <span className="text-xs text-slate-400">Página {metadata.page} de {metadata.total_pages}</span>
+          <span className="text-xs text-slate-400 font-medium">Página {metadata.page} de {metadata.total_pages}</span>
           <Button size="sm" variant="outline" disabled={!metadata.has_next || isFetching}
+            className="rounded-xl h-8 text-xs font-semibold px-3"
             onClick={() => setPage((p) => p + 1)}>
             Próxima
           </Button>
         </div>
       )}
+
+      {/* Cabeçalho da Lista */}
       <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
         <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight text-slate-800 dark:text-slate-200">
-          {Icon && <Icon size={20} />}
+          {Icon && <Icon size={20} className="text-slate-500 dark:text-slate-400" />}
           <span>{title}</span>
         </h2>
         {!readOnly && (
           <Button
             size="sm"
             onClick={() => setIsAddingTask(true)}
+            disabled={isLoading}
             className="shine-gradient rounded-xl px-3 h-8 text-xs font-medium font-sans shadow-sm transition-transform active:scale-95"
           >
             <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar
@@ -113,12 +122,30 @@ const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, re
         )}
       </div>
 
-      {tasks.length === 0 ? (
-        <div className="py-10 text-center flex flex-col items-center justify-center bg-slate-50/40 dark:bg-slate-900/40 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+      {/* Gerenciamento de Estados de Loading Local / Skeletons */}
+      {isLoading && tasks.length === 0 ? (
+        // Estado 1: Carregamento Inicial (Skeletons)
+        <div className="space-y-2 animate-in fade-in duration-300">
+          {[1, 2, 3].map((n) => (
+            <div
+              key={n}
+              className="h-12 border border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-900/30 rounded-xl p-3 flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3 w-2/3">
+                <div className="h-4 w-4 bg-slate-200/80 dark:bg-slate-800 rounded-md animate-pulse shrink-0" />
+                <div className="h-3.5 bg-slate-200/80 dark:bg-slate-800 rounded-md w-full animate-pulse" />
+              </div>
+              <div className="h-3.5 bg-slate-100 dark:bg-slate-800 rounded-md w-16 animate-pulse" />
+            </div>
+          ))}
+        </div>
+      ) : tasks.length === 0 ? (
+        // Estado 2: Lista Vazia Concluída
+        <div className="py-10 text-center flex flex-col items-center justify-center bg-slate-50/40 dark:bg-slate-900/40 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl animate-in fade-in duration-300">
           <div className="p-3 bg-white dark:bg-slate-900 rounded-full shadow-sm text-slate-400 dark:text-slate-600 mb-2.5">
             <Inbox className="h-5 w-5" />
           </div>
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Tudo limpo por aqui!</p>
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Tudo limpo por aqui!</p>
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Nenhuma tarefa pendente nesta categoria.</p>
           {!readOnly && (
             <Button
@@ -131,13 +158,24 @@ const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, re
           )}
         </div>
       ) : (
-        <div className="space-y-2">
-          {tasks.map((task) => (
-            <TaskItem key={task.id} task={task} readOnly={readOnly} />
-          ))}
+        // Estado 3: Lista Ativa com Esmaecimento Suave em Background Fetch
+        <div className="relative overflow-hidden rounded-xl">
+          <div className={cn("space-y-2 transition-opacity duration-300", isFetching && "opacity-60 pointer-events-none")}>
+            {tasks.map((task) => (
+              <TaskItem key={task.id} task={task} readOnly={readOnly} />
+            ))}
+          </div>
+
+          {/* Spinner flutuante sutil se houver paginação ou atualização paralela */}
+          {isFetching && (
+            <div className="absolute top-2 right-2 bg-white/80 dark:bg-slate-900/80 p-1.5 rounded-lg border border-slate-100 dark:border-slate-800 shadow-sm backdrop-blur-sm animate-in fade-in duration-200">
+              <Loader2 className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400 animate-spin" />
+            </div>
+          )}
         </div>
       )}
 
+      {/* Modal / Dialog para Criar Nova Tarefa */}
       <Dialog open={isAddingTask} onOpenChange={(open) => !open && handleCancel()}>
         <DialogContent className="sm:max-w-[425px] rounded-2xl p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl">
           <DialogHeader>
@@ -188,7 +226,7 @@ const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, re
                   <SelectTrigger className="rounded-xl border-slate-200/80 dark:border-slate-800 focus:ring-teal-500 text-left">
                     <SelectValue placeholder="Selecione onde realizar a tarefa" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl border-slate-200 dark:border-slate-800">
+                                  <SelectContent className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg">
                     {rooms?.map((room) => (
                       <SelectItem
                         key={room.id}
@@ -202,7 +240,7 @@ const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, re
                 </Select>
 
                 {roomError && (
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-rose-500 mt-1 animate-in fade-in slide-in-from-top-1">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 animate-in fade-in duration-200">
                     <AlertCircle className="h-3.5 w-3.5" />
                     <span>{roomError}</span>
                   </div>
@@ -226,7 +264,7 @@ const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, re
               disabled={!newTaskName.trim()}
               className="rounded-xl h-9 text-xs font-semibold px-5 bg-teal-600 hover:bg-teal-500 text-white dark:bg-teal-600 dark:hover:bg-teal-700 disabled:opacity-40 disabled:pointer-events-none transition-all"
             >
-              Salvar Tarefa
+              Adicionar
             </Button>
           </DialogFooter>
         </DialogContent>

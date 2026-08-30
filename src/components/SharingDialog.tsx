@@ -12,13 +12,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, Copy, Loader2, Users, Trash, Info } from "lucide-react";
+import { AlertCircle, Copy, Loader2, Users, Trash, Home} from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
 import { createShareApi } from "@/lib/api/sharing";
-// import type { PendingMemberResponse } from "@/lib/api/households";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { cn } from "@/lib/utils";
 
 interface SharingDialogProps {
   open: boolean;
@@ -48,16 +48,19 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
 
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const shareApi = useMemo(
-      () => (activeHouseholdId ? createShareApi(activeHouseholdId) : null),
-      [activeHouseholdId]
-    );
+    () => (activeHouseholdId ? createShareApi(activeHouseholdId) : null),
+    [activeHouseholdId]
+  );
   const [joinCode, setJoinCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const loadHouseholdData = useCallback(async () => {
+  const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
+  const [isRemoveMemberDialogOpen, setIsRemoveMemberDialogOpen] = useState(false);
+  const [selectedMemberIdToRemove, setSelectedMemberIdToRemove] = useState<string | null>(null);
 
-    if (!activeHouseholdId || !shareApi ) return;
+  const loadHouseholdData = useCallback(async () => {
+    if (!activeHouseholdId || !shareApi) return;
 
     try {
       const [inviteRes] = await Promise.all([
@@ -65,7 +68,6 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
       ]);
       setInviteCode(inviteRes.active_invite.invite_key);
       await refetchMembers();
-      console.log("-------  ",members," =======")
     } catch (err) {
       console.error("Erro ao carregar dados da residência:", err);
     }
@@ -80,23 +82,6 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
   }, [open, loadHouseholdData]);
 
 
-  // TODO: Criar handle de  revoke de compartilhamento
-
-  // const handleRejectUser = async (userId: string) => {
-  //   if (!activeHouseholdId) return;
-  //   setApprovingUserId(userId);
-  //   try {
-  //     await householdsApi.rejectPendingMember(activeHouseholdId, userId);
-  //     toast.success("Solicitação rejeitada");
-  //     await loadHouseholdData();
-  //   } catch (err) {
-  //     console.error("Erro ao rejeitar usuário:", err);
-  //     toast.error("Erro ao rejeitar solicitação");
-  //   } finally {
-  //     setApprovingUserId(null);
-  //   }
-  // };
-
   const handleCopyCode = () => {
     if (inviteCode) {
       navigator.clipboard.writeText(inviteCode);
@@ -105,7 +90,7 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
   };
 
   const handleRegenerateCode = async () => {
-    if (!activeHouseholdId || !shareApi ) return;
+    if (!activeHouseholdId || !shareApi) return;
     setIsLoading(true);
     try {
       const res = await shareApi.getNewInviteCode();
@@ -139,7 +124,7 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
     setIsLoading(true);
 
     try {
-      if (!shareApi ) return;
+      if (!shareApi) return;
 
       const result = await shareApi.joinHouseholdByInviteCode(joinCode.trim());
       updateActiveHousehold(result.household_id);
@@ -159,10 +144,8 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
     }
   };
 
-  const handleLeaveHouse = async () => {
-    if (!activeHouseholdId || !shareApi ) return;
-    if (!confirm("Tem certeza que deseja sair desta casa?")) return;
-
+  const handleLeaveHouseConfirmed = async () => {
+    if (!activeHouseholdId || !shareApi) return;
     try {
       await shareApi.leaveHousehold();
       updateActiveHousehold(null);
@@ -172,181 +155,232 @@ const SharingDialog: React.FC<SharingDialogProps> = ({
       toast.success("Você saiu da residência com sucesso");
     } catch (err) {
       console.error("Erro ao sair da residência:", err);
-      toast.error("Erro ao sair da residência:");
+      toast.error("Erro ao sair da residência");
     }
   };
 
-  const handleRemoveMember = async (userId: string) => {
-    if (!activeHouseholdId || !shareApi ) return;
-    if (!confirm("Tem certeza que deseja remover esse usuário?")) return;
-
+  const handleRemoveMemberConfirmed = async () => {
+    if (!activeHouseholdId || !shareApi || !selectedMemberIdToRemove) return;
     try {
-      await shareApi.removeMember(userId);
+      await shareApi.removeMember(selectedMemberIdToRemove);
       await queryClient.invalidateQueries({ queryKey: ["household"] });
       await refetchMembers();
       toast.success("Usuário removido com sucesso");
     } catch (err) {
       console.error("Erro ao remover usuário:", err);
       toast.error("Erro ao remover usuário");
+    } finally {
+      setSelectedMemberIdToRemove(null);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-107">
-        <DialogHeader>
-          <DialogTitle>Compartilhamento</DialogTitle>
-          <DialogDescription>
-            Compartilhe sua residência com outras pessoas
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[420px] rounded-2xl p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl gap-0">
+          <DialogHeader className="pb-4">
+            <DialogTitle className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-50">
+              Compartilhamento
+            </DialogTitle>
+            <DialogDescription className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+              Compartilhe sua residência e gerencie os membros do ambiente.
+            </DialogDescription>
+          </DialogHeader>
 
-        {!isAuthenticated && (
-          <Alert className="mb-4" variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Login necessário</AlertTitle>
-            <AlertDescription>
-              Você precisa estar logado para usar o compartilhamento entre dispositivos.
-            </AlertDescription>
-          </Alert>
-        )}
+          {!isAuthenticated && (
+            <Alert className="mb-4 rounded-xl border-rose-100 bg-rose-50/50 dark:bg-rose-950/20 dark:border-rose-900/50 text-rose-900 dark:text-rose-200" variant="destructive">
+              <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+              <AlertTitle className="font-semibold text-xs uppercase tracking-wider mb-1">Login necessário</AlertTitle>
+              <AlertDescription className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                Você precisa estar logado para usar o compartilhamento entre dispositivos.
+              </AlertDescription>
+            </Alert>
+          )}
 
-        <Tabs defaultValue="my-household">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="my-household">Minha Residência</TabsTrigger>
-            <TabsTrigger value="join">Entrar</TabsTrigger>
-          </TabsList>
+          <Tabs defaultValue="my-household" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 p-1 bg-slate-100/80 dark:bg-slate-800/80 rounded-xl h-10">
+              <TabsTrigger
+                value="my-household"
+                className="rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-50 data-[state=active]:shadow-sm transition-all"
+              >
+                Minha Residência
+              </TabsTrigger>
+              <TabsTrigger
+                value="join"
+                className="rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-50 data-[state=active]:shadow-sm transition-all"
+              >
+                Entrar em Casa
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="my-household" className="space-y-4 pt-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+            <TabsContent value="my-household" className="space-y-5 pt-4 outline-none">
+              {error && (
+                <Alert variant="destructive" className="rounded-xl border-rose-100 bg-rose-50/50 dark:bg-rose-950/20 dark:border-rose-900/50">
+                  <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                  <AlertDescription className="text-xs font-medium text-rose-700 dark:text-rose-300">{error}</AlertDescription>
+                </Alert>
+              )}
 
-            <p className="text-sm">
-              Compartilhe o código abaixo para convidar outras pessoas para sua residência:
-            </p>
-
-            <div className="flex space-x-2">
-              <Input value={inviteCode || ""} readOnly />
-              <Button size="icon" variant="outline" onClick={handleCopyCode} disabled={!inviteCode}>
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRegenerateCode}
-              disabled={isLoading}
-            >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Gerar novo código
-            </Button>
-
-            {members.length > 0 && (
-              <div className="mt-4 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-sm font-medium">Pessoas conectadas</p>
-                  </div>
-                  {currentMemberRole && currentMemberRole !== "owner" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-destructive"
-                      onClick={handleLeaveHouse}
-                    >
-                      Sair da residência
-                    </Button>
-                  )}
-                </div>
-                <Separator />
-                <div className="space-y-2">
-                  {members.map((member) => (
-
-                    <div key={member.user_id} className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="bg-shine-teal/10">
-                          {member.user_id === user?.id ? user?.name ?? "Você" : member.name}
-                        </Badge>
-                        {member.role === "owner" && (
-                          <span className="text-xs text-muted-foreground">(Dono)</span>
-                        )}
-                      </div>
-                      {member.role !== "owner" && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive"
-                          onClick={() => handleRemoveMember(member.user_id)}
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      )}
-
-{/* TODO: ADICIONAR BOTÃO DE LEAVE HOUSEHOLD
-                      {member.role !== "owner" && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive"
-                          onClick={() => handleLeaveHouse()}
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      )}
-                        */}
-                    </div>
-                  ))}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold tracking-wide uppercase text-slate-500 dark:text-slate-400">
+                  Código de Convite
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    value={inviteCode || ""}
+                    readOnly
+                    className="rounded-xl font-mono text-sm tracking-wider font-semibold border-slate-200/80 focus-visible:ring-teal-500 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 text-slate-700 dark:text-slate-300 h-10"
+                  />
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    onClick={handleCopyCode}
+                    disabled={!inviteCode}
+                    className="rounded-xl h-10 w-10 border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 shrink-0"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
-            )}
 
-            {isAuthenticated && (
-              <Alert className="mt-2">
-                <Info className="h-4 w-4" />
-                <AlertDescription className="text-xs">
-                  Cada vez que alguém marca uma tarefa como concluída, isso será refletido para todos na residência.
-                </AlertDescription>
-              </Alert>
-            )}
-          </TabsContent>
+              <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRegenerateCode}
+                  disabled={isLoading}
+                  className="rounded-xl border-slate-200 dark:border-slate-800 text-xs font-semibold h-8 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                >
+                  {isLoading ? (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5" />
+                  )}
+                  Renovar código
+                </Button>
 
-          <TabsContent value="join" className="space-y-4 pt-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-xs font-semibold rounded-xl h-8 px-3"
+                  onClick={() => setIsLeaveDialogOpen(true)}
+                >
+                  Sair da residência
+                </Button>
+              </div>
 
-            <p className="text-sm">
-              Digite o código de convite que você recebeu:
-            </p>
+              {members.length > 0 && (
+                <div className="space-y-3 pt-1">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Membros ativos ({members.length})
+                    </p>
+                  </div>
 
-            <Input
-              value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value)}
-              placeholder="Ex: shine-abc123"
-            />
+                  <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+                    {members.map((member) => {
+                      const isMe = member.user_id === user?.id;
+                      return (
+                        <div
+                          key={member.user_id}
+                          className="flex justify-between items-center p-3 rounded-xl border border-slate-200/60 dark:border-slate-800/80 bg-white dark:bg-slate-900 shadow-sm"
+                        >
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                              {member.name} {isMe && <span className="text-xs text-slate-400 font-normal ml-0.5">(você)</span>}
+                            </span>
+                            <div>
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  "rounded-md px-1.5 py-0 text-[10px] font-bold tracking-wide uppercase",
+                                  member.role === "owner"
+                                    ? "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20"
+                                    : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border-transparent"
+                                )}
+                              >
+                                {member.role}
+                              </Badge>
+                            </div>
+                          </div>
 
-            <Button
-              className="w-full shine-gradient"
-              onClick={handleJoinHousehold}
-              disabled={isLoading || !isAuthenticated}
-            >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Entrar na Residência
-            </Button>
-          </TabsContent>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
+                          {currentMemberRole === "owner" && !isMe && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg shrink-0 transition-colors"
+                              onClick={() => {
+                                setSelectedMemberIdToRemove(member.user_id);
+                                setIsRemoveMemberDialogOpen(true);
+                              }}
+                            >
+                              <Trash className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="join" className="space-y-4 pt-4 outline-none">
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold tracking-wide uppercase text-slate-500 dark:text-slate-400">
+                    Código da nova residência
+                  </label>
+                  <Input
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value)}
+                    placeholder="Ex: ABC-123"
+                    className="rounded-xl border-slate-200/80 focus-visible:ring-teal-500 focus-visible:border-teal-500 dark:border-slate-800 h-10 font-mono tracking-wider placeholder:font-sans placeholder:tracking-normal"
+                  />
+                </div>
+
+                <Button
+                  className="w-full bg-teal-600 hover:bg-teal-500 text-white dark:bg-teal-600 dark:hover:bg-teal-700 text-xs font-semibold rounded-xl h-10 transition-all shadow-sm"
+                  onClick={handleJoinHousehold}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Home className="mr-2 h-4 w-4" />
+                  )}
+                  Vincular e entrar na casa
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmationDialog
+        isOpen={isLeaveDialogOpen}
+        onOpenChange={setIsLeaveDialogOpen}
+        onConfirm={handleLeaveHouseConfirmed}
+        title="Sair da Residência"
+        description="Tem certeza de que deseja sair desta casa? Você perderá o acesso às tarefas e cômodos vinculados a ela."
+        confirmLabel="Sair da casa"
+        cancelLabel="Cancelar"
+        variant="danger"
+      />
+
+      <ConfirmationDialog
+        isOpen={isRemoveMemberDialogOpen}
+        onOpenChange={setIsRemoveMemberDialogOpen}
+        onConfirm={handleRemoveMemberConfirmed}
+        title="Remover Membro"
+        description="Tem certeza que deseja remover esse usuário do ambiente compartilhado? Ele perderá acesso imediato."
+        confirmLabel="Remover"
+        cancelLabel="Cancelar"
+        variant="danger"
+      />
+    </>
   );
-};
+}
 
 export default SharingDialog;

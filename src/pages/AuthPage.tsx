@@ -124,7 +124,7 @@ export default function AuthPage() {
               <form onSubmit={handleLogin} className="space-y-3.5">
                 <div className="space-y-1.5">
                   <Label htmlFor="login-email" className="text-[11px] font-semibold tracking-wide uppercase text-slate-500 dark:text-slate-400">
-                    Email
+                    Email [AUTH PAGHE]
                   </Label>
                   <Input
                     id="login-email"
