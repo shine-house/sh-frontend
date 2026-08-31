@@ -4,6 +4,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -19,11 +26,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
-import { MoreHorizontal, Pencil, Trash2, CheckCircle2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { TaskWithStatus } from "@/lib/api/types/task-types";
+import { TASK_TYPE_OPTIONS } from "@/lib/taskTypeOptions";
+import type { TaskTypeEnum } from "@/lib/api/types/util-types";
+
 
 interface TaskItemProps {
   task: TaskWithStatus;
@@ -31,11 +41,14 @@ interface TaskItemProps {
 }
 
 const TaskItem: React.FC<TaskItemProps> = ({ task, readOnly = false }) => {
-  const { toggleTaskStatus, editTask: updateTask, removeTask: deleteTask } = useTask();
+  const { toggleTaskStatus, editTask: updateTask, removeTask: deleteTask, rooms } = useTask();
   const taskContext = { type: task.type, roomId: task.room_id };
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(task.name);
   const [editedDescription, setEditedDescription] = useState(task.description ?? "");
+  const [editedType, setEditedType] = useState<TaskTypeEnum>(task.type);
+  const [editedRoomId, setEditedRoomId] = useState<string>(task.type === "zone" ? task.room_id : "");
+  const [roomError, setRoomError] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const formatDate = (isoDate: string) => {
@@ -56,20 +69,46 @@ const handleToggleStatus = () => {
   const handleStartEditing = () => {
     setEditedName(task.name);
     setEditedDescription(task.description ?? "");
+    setEditedType(task.type);
+    setEditedRoomId(task.type === "zone" ? task.room_id : "");
+    setRoomError(null);
     setIsEditing(true);
   };
 
   const handleCancelEdit = () => {
     setEditedName(task.name);
     setEditedDescription(task.description ?? "");
+    setEditedType(task.type);
+    setEditedRoomId(task.type === "zone" ? task.room_id : "");
+    setRoomError(null);
     setIsEditing(false);
   };
 
+  const handleTypeChange = (value: TaskTypeEnum) => {
+    setEditedType(value);
+    setRoomError(null);
+    setEditedRoomId(value === "zone" && task.type === "zone" ? task.room_id : "");
+  };
+
   const handleUpdateTask = () => {
-    if (editedName.trim()) {
-      updateTask(task.id, { name: editedName.trim(), description: editedDescription.trim() || null }, taskContext);
-      setIsEditing(false);
+    if (!editedName.trim()) return;
+
+    if (editedType === "zone" && !editedRoomId) {
+      setRoomError("Selecione um cômodo para vincular a tarefa de zona");
+      return;
     }
+
+    updateTask(
+      task.id,
+      {
+        name: editedName.trim(),
+        description: editedDescription.trim() || null,
+        type: editedType,
+        room_id: editedType === "zone" ? editedRoomId : task.room_id,
+      },
+      taskContext
+    );
+    setIsEditing(false);
   };
 
   const handleDeleteTask = () => {
@@ -115,11 +154,65 @@ const handleToggleStatus = () => {
                 onKeyDown={(e) => e.key === "Enter" && handleUpdateTask()}
               />
             </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex-1 space-y-1.5">
+                <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Tipo de tarefa
+                </label>
+                <Select value={editedType} onValueChange={(value) => handleTypeChange(value as TaskTypeEnum)}>
+                  <SelectTrigger className="rounded-xl h-9 text-sm border-slate-200 dark:border-slate-800 focus:ring-teal-500">
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg">
+                    {TASK_TYPE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value} className="rounded-lg text-sm cursor-pointer">
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            {editedType === "zone" && (
+                <div className="flex-1 space-y-1.5">
+                  <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    Cômodo / Zona
+                  </label>
+                  <Select
+                    value={editedRoomId}
+                    onValueChange={(value) => {
+                      setEditedRoomId(value);
+                      setRoomError(null);
+                    }}
+                  >
+                    <SelectTrigger className="rounded-xl h-9 text-sm border-slate-200 dark:border-slate-800 focus:ring-teal-500">
+                      <SelectValue placeholder="Selecione o cômodo" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg">
+                      {
+                      rooms?.map((room) => (
+                        <SelectItem key={room.id} value={room.id} className="rounded-lg text-sm cursor-pointer">
+                          {room.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            {roomError && (
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 animate-in fade-in duration-200">
+                <AlertCircle className="h-3.5 w-3.5" />
+                <span>{roomError}</span>
+              </div>
+            )}
+
             <div className="flex gap-2 justify-end">
               <Button
                 size="sm"
                 onClick={handleUpdateTask}
-                className="rounded-lg h-8 text-xs font-medium px-3 bg-slate-900 hover:bg-slate-800 dark:bg-slate-50 dark:text-slate-900 dark:hover:bg-slate-200"
+                disabled={editedType === "zone" && !editedRoomId}
+                className="rounded-lg h-8 text-xs font-medium px-3 bg-slate-900 hover:bg-slate-800 dark:bg-slate-50 dark:text-slate-900 dark:hover:bg-slate-200 disabled:opacity-40 disabled:pointer-events-none"
               >
                 Salvar
               </Button>
