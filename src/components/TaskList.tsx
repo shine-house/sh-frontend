@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useAutoPageBack } from "@/hooks/useAutoPageBack";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { useTask } from "@/context/TaskContext";
 import TaskItem from "./TaskItem";
 import { Button } from "@/components/ui/button";
@@ -36,9 +38,10 @@ interface TaskListProps {
 const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, readOnly = false }) => {
   const { addTask, rooms } = useTask();
   const [page, setPage] = useState(DEFAULT_PAGE);
+  const [size, setSize] = useState(DEFAULT_SIZE);
 
   // Capturando também o isLoading para a primeira busca da query
-  const { tasks, metadata, isFetching, isLoading } = useTasksQuery({ roomId, type, page, size: DEFAULT_SIZE });
+  const { tasks, metadata, isFetching, isLoading } = useTasksQuery({ roomId, type, page, size });
 
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskName, setNewTaskName] = useState("");
@@ -51,6 +54,18 @@ const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, re
     setNewTaskRoomId(nextRoomId);
     setRoomError(null);
   }, [roomId]);
+
+  useEffect(() => {
+    setPage(DEFAULT_PAGE);
+  }, [roomId, type]);
+
+  useAutoPageBack(page, setPage, tasks.length, isFetching, metadata?.total_items);
+
+  const handleSizeChange = (nextSize: number) => {
+    setSize(nextSize);
+    setPage(DEFAULT_PAGE);
+  };
+
 
   const handleAddTask = () => {
     if (!newTaskName.trim()) return;
@@ -87,7 +102,20 @@ const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, re
 
   return (
     <div className="space-y-4">
-      {/* Paginação */}
+      
+      {metadata && metadata.total_pages > 1 && (
+        <PaginationControls
+          page={metadata.page}
+          totalPages={metadata.total_pages}
+          totalItems={metadata.total_items}
+          size={size}
+          hasPrevious={metadata.has_previous}
+          hasNext={metadata.has_next}
+          isFetching={isFetching}
+          onPageChange={setPage}
+          onSizeChange={handleSizeChange}
+        />
+      )}
       {metadata && metadata.total_pages > 1 && (
         <div className="flex justify-between items-center pt-2">
           <Button size="sm" variant="outline" disabled={!metadata.has_previous || isFetching}

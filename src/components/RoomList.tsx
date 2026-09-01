@@ -1,4 +1,8 @@
 import React, { useState } from "react";
+import { useRoomsQuery } from "@/features/rooms/useRoomsQuery";
+import { useAutoPageBack } from "@/hooks/useAutoPageBack";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import { DEFAULT_ROOM_PAGE, DEFAULT_ROOM_SIZE } from "@/lib/queryKeys/roomKeys";
 import { useTask } from "@/context/TaskContext";
 import RoomItem from "./RoomItem";
 import { Button } from "@/components/ui/button";
@@ -18,11 +22,21 @@ interface RoomListProps {
 }
 
 const RoomList: React.FC<RoomListProps> = ({ onSelectRoom }) => {
-  // Resgatamos o estado de carregamento global do contexto de tarefas
-  const { rooms, addRoom, isLoading } = useTask();
+  const {addRoom } = useTask();
   const [isAddingRoom, setIsAddingRoom] = useState(false);
   const [newRoomName, setNewRoomName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [page, setPage] = useState(DEFAULT_ROOM_PAGE);
+  const [size, setSize] = useState(DEFAULT_ROOM_SIZE);
+
+  const { rooms, metadata, isLoading, isFetching } = useRoomsQuery({ page, size });
+
+  useAutoPageBack(page, setPage, rooms.length, isFetching, metadata?.total_items);
+
+  const handleSizeChange = (nextSize: number) => {
+    setSize(nextSize);
+    setPage(DEFAULT_ROOM_PAGE);
+  };
 
   const handleAddRoom = async () => {
     if (!newRoomName.trim()) return;
@@ -59,9 +73,7 @@ const RoomList: React.FC<RoomListProps> = ({ onSelectRoom }) => {
         </Button>
       </div>
 
-      {/* Controle de Estados de Exibição (Loading -> Vazio -> Grid Ativo) */}
       {isLoading && rooms.length === 0 ? (
-        // Estado Inicial de Carregamento (Skeleton / Loading Grid)
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in duration-300">
           {[1, 2, 3, 4].map((n) => (
             <div
@@ -77,7 +89,6 @@ const RoomList: React.FC<RoomListProps> = ({ onSelectRoom }) => {
           ))}
         </div>
       ) : rooms.length === 0 ? (
-        // Estado de Lista Vazia Concluída
         <div className="flex flex-col items-center justify-center p-8 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl bg-white/40 dark:bg-slate-900/20 backdrop-blur-sm min-h-40 gap-3 animate-in fade-in duration-300">
           <div className="p-3 bg-slate-100/80 dark:bg-slate-800/50 rounded-xl text-slate-400">
             <Home className="h-5 w-5" />
@@ -88,21 +99,36 @@ const RoomList: React.FC<RoomListProps> = ({ onSelectRoom }) => {
           </div>
         </div>
       ) : (
-        // Lista Ativa de Cômodos com esmaecimento sutil caso haja sincronização paralela
-        <div className={cn("grid grid-cols-1 sm:grid-cols-2 gap-4 relative transition-opacity duration-300", isLoading && "opacity-75 pointer-events-none")}>
-          {rooms.map((room) => (
-            <RoomItem
-              key={room.id}
-              room={room}
-              onSelect={onSelectRoom}
-            />
-          ))}
-          {isLoading && (
+        <>
+          <div className={cn("grid grid-cols-1 sm:grid-cols-2 gap-4 relative transition-opacity duration-300", isFetching && "opacity-75 pointer-events-none")}>
+            {rooms.map((room) => (
+              <RoomItem key={room.id} room={room} onSelect={onSelectRoom} />
+            ))}
+            {isFetching && (
+              <div className="absolute top-3 right-3 bg-white/80 dark:bg-slate-900/80 p-1.5 rounded-lg border border-slate-100 dark:border-slate-800 shadow-sm backdrop-blur-sm">
+                {isLoading && (
             <div className="absolute top-3 right-3 bg-white/80 dark:bg-slate-900/80 p-1.5 rounded-lg border border-slate-100 dark:border-slate-800 shadow-sm backdrop-blur-sm">
               <Loader2 className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400 animate-spin" />
             </div>
           )}
-        </div>
+              </div>
+            )}
+          </div>
+
+          {metadata && metadata.total_pages > 1 && (
+            <PaginationControls
+              page={metadata.page}
+              totalPages={metadata.total_pages}
+              totalItems={metadata.total_items}
+              size={size}
+              hasPrevious={metadata.has_previous}
+              hasNext={metadata.has_next}
+              isFetching={isFetching}
+              onPageChange={setPage}
+              onSizeChange={handleSizeChange}
+            />
+          )}
+        </>
       )}
 
       {/* Modal / Dialog para Criar Novo Cômodo */}

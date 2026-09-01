@@ -5,13 +5,20 @@ import type {
   CreateRoomRequest,
   UpdateRoomRequest,
   RoomReorderRequest,
+  RoomQueryParams,
 } from "@/lib/api/types/room-types";
 
 export const createRoomsApi = (householdId: string) => {
   const basePath = `/households/${householdId}/rooms`;
 
   return {
-    listRooms: () => apiClient.get<ListRoomResponse>(basePath),
+    listRooms: (params?: RoomQueryParams) => {
+      const query = new URLSearchParams();
+      if (params?.page) query.set("page", params.page.toString());
+      if (params?.size) query.set("size", params.size.toString());
+      const qs = query.toString();
+      return apiClient.get<ListRoomResponse>(`${basePath}${qs ? `?${qs}` : ""}`);
+    },
 
     createRoom: (data: CreateRoomRequest) =>
       apiClient.post<RoomResponse>(basePath, data),

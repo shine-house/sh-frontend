@@ -1,4 +1,4 @@
-import type { MetadataPagination, UUID } from "../lib/api/types/util-types";
+import type { MetadataPagination, UUID } from "./util-types";
 
 export interface ListRoomResponse {
   items: RoomResponse[];
@@ -27,4 +27,9 @@ export interface RoomResponse {
 
 export interface RoomReorderRequest {
   room_ids: UUID[];
+}
+
+export interface RoomQueryParams {
+  page?: number;
+  size?: number;
 }
