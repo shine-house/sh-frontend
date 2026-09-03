@@ -140,12 +140,17 @@ const addTaskMutation = useMutation({
 
 
   const editTaskMutation = useMutation({
-    mutationFn: async ({ id, data, context }: { id: string; data: TaskUpdate; context: TaskMutationContext }) => {
+     mutationFn: async ({ id, data, context }: { id: string; data: TaskUpdate; context: TaskMutationContext }) => {
       if (!tasksApi) throw new Error("Household not ready");
-      await tasksApi.updateTask(id, data);
-      return context;
+      const updated = await tasksApi.updateTask(id, data);
+      return { context, updated };
     },
-    onSuccess: ({ roomId, type }) => invalidateForTask(roomId, type),
+    onSuccess: ({ context, updated }) => {
+      void invalidateForTask(context.roomId, context.type);
+      if (updated.room_id !== context.roomId || updated.type !== context.type) {
+        void invalidateForTask(updated.room_id, updated.type);
+      }
+    },
     onError: () => toast.error("Erro ao editar tarefa"),
   });
 
