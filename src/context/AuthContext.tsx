@@ -3,6 +3,7 @@ import type { UserResponse } from "@/lib/api/types/user-types";
 import { useAuthSession } from "@/features/auth/useAuthSession";
 import { useAuthMutations } from "@/features/auth/useAuthMutations";
 import CleaningLoader from "@/components/CleaningLoader";
+import type { InfoMessage } from "@/lib/api/types/util-types";
 
 type AuthContextType = {
   user: UserResponse | null;
@@ -10,7 +11,7 @@ type AuthContextType = {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ user: UserResponse; active_household_id: string | null }>;
-  register: (email: string, password: string, name: string) => Promise<UserResponse>;
+  register: (email: string, password: string, name: string) => Promise<InfoMessage>;
   logout: () => Promise<void>;
 };
 

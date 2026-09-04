@@ -1,16 +1,22 @@
 import { apiClient } from "./client";
-import type { UserResponse, AuthMeResponse } from "./types/user-types";
+import type { AuthMeResponse } from "./types/user-types";
 import type { InfoMessage } from "./types/util-types";
-import type { ForgotPasswordRequest, ResetPasswordRequest } from "./types/auth-types";
+import type { ForgotPasswordRequest, RegisterRequest, ResendVerificationRequest, ResetPasswordRequest, VerifyEmailRequest } from "./types/auth-types";
 
 export const signIn = async (email: string, password: string) => {
   const data = await apiClient.post<AuthMeResponse>("/auth/login", { email, password });
   return { user: data.user, active_household_id: data.active_household_id };
 };
 
-export const signUp = async (email: string, password: string, name: string) => {
-  return await apiClient.post<UserResponse>("/auth/register", { email, password, name });
-};
+export const register = async (payload: RegisterRequest): Promise<InfoMessage> =>
+  apiClient.post<InfoMessage>("/auth/register", payload);
+
+export const verifyEmail = async (payload: VerifyEmailRequest): Promise<InfoMessage> =>
+  apiClient.post<InfoMessage>("/auth/verify-email", payload);
+
+export const resendVerification = async (payload: ResendVerificationRequest): Promise<InfoMessage> =>
+  apiClient.post<InfoMessage>("/auth/resend-verification", payload);
+
 
 export const signOut = async (): Promise<void> => {
   await apiClient.post("/auth/logout");

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { signIn, signUp, signOut } from "@/lib/api/auth";
+import { signIn, register, signOut } from "@/lib/api/auth";
 import { toast } from "sonner";
 
 export const useAuthMutations = () => {
@@ -31,10 +31,7 @@ export const useAuthMutations = () => {
 
   const registerMutation = useMutation({
     mutationFn: ({ email, password, name }: { email: string; password: string; name: string }) =>
-      signUp(email, password, name),
-    onSuccess: () => {
-      toast.success("Email de confirmação enviado! Verifique sua caixa de entrada.", { duration: 5000 });
-    },
+      register({email, password, name}),
   });
 
   const logoutMutation = useMutation({

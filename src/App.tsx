@@ -12,7 +12,7 @@ import ListsPage from "./pages/ListsPage";
 import RoomDetailPage from "./pages/RoomDetailPage";
 import SettingsPage from "./pages/SettingsPage";
 import AuthPage from "./pages/AuthPage";
-// import ConfirmEmailPage from "./pages/ConfirmEmailPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import NotFound from "./pages/NotFound";
@@ -30,13 +30,11 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<TodayPage />} />
-               <Route path="/lists" element={<ListsPage />} />
-               <Route path="/room/:roomId" element={<RoomDetailPage />} />
-               <Route path="/settings" element={<SettingsPage />} />
-               <Route path="/auth" element={<AuthPage />} />
-              {/*
-              <Route path="/confirm-email" element={<ConfirmEmailPage />} />
-              */}
+              <Route path="/lists" element={<ListsPage />} />
+              <Route path="/room/:roomId" element={<RoomDetailPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="*" element={<NotFound />} />
