@@ -20,7 +20,14 @@ interface RequestOptions extends RequestInit {
 
 let refreshInFlight: Promise<boolean> | null = null;
 
-const AUTH_ENDPOINTS_NO_REFRESH = ["/auth/login", "/auth/register", "/auth/refresh"];
+const AUTH_ENDPOINTS_NO_REFRESH = [
+  "/auth/login",
+  "/auth/register",
+  "/auth/refresh",
+  "/auth/forgot-password",
+  "/auth/reset-password",
+];
+
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { _retry, ...fetchOptions } = options;

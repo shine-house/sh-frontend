@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,6 @@ import { AlertCircle, Loader2, Sparkles } from "lucide-react";
 export default function AuthPage() {
   const navigate = useNavigate();
   const { login, register, isAuthenticated } = useAuth();
-  // const { login, register, loginWithGoogle, isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,19 +67,6 @@ export default function AuthPage() {
       setIsLoading(false);
     }
   };
-
-  // const handleGoogleLogin = async () => {
-  //   setError(null);
-  //   setIsLoading(true);
-
-  //   try {
-  //     await loginWithGoogle();
-  //   } catch (err) {
-  //     setError("Falha no login com Google. Tente novamente mais tarde.");
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
 
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4 bg-slate-50/50 dark:bg-slate-950 overflow-hidden transition-colors duration-300">
@@ -161,30 +147,16 @@ export default function AuthPage() {
                   Entrar
                 </Button>
               </form>
-
-              <div className="relative py-2">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-slate-100 dark:border-slate-800" />
-                </div>
-                <div className="relative flex justify-center text-[10px] uppercase tracking-wider font-semibold">
-                  <span className="bg-white dark:bg-slate-900 px-2 text-slate-400 dark:text-slate-500">
-                    Ou continue com
-                  </span>
-                </div>
-              </div>
-
-              <Button
-                variant="outline"
-                // onClick={handleGoogleLogin}
-                // disabled={isLoading}
-                disabled={true}
-                className="w-full rounded-xl h-10 text-xs font-semibold border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed opacity-50"
+            <div className="flex justify-end">
+              <Link
+                to="/forgot-password"
+                className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
               >
-                Google (Em breve)
-              </Button>
+                Esqueceu sua senha?
+              </Link>
+            </div>
             </TabsContent>
 
-            {/* Aba de Cadastro */}
             <TabsContent value="register" className="space-y-4 pt-1 focus-visible:outline-none">
               {error && (
                 <Alert variant="destructive" className="rounded-xl py-2.5">
