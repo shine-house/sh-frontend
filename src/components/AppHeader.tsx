@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import AuthDialog from "./AuthDialog";
+import { useNavigate } from "react-router-dom";
 import SharingDialog from "./SharingDialog";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -33,6 +33,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     logout
   } = useAuth();
 
+  const navigate = useNavigate(); // Inicialização do hook de navegação
   const [isSharingDialogOpen, setIsSharingDialogOpen] = useState(false);
   const { isShared } = useHousehold();
 
@@ -143,17 +144,13 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                     Minha Conta
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800" />
-                  <AuthDialog
-                    trigger={
-                      <DropdownMenuItem
-                        onSelect={e => e.preventDefault()}
-                        className="rounded-lg text-xs gap-2 py-2 cursor-pointer focus:bg-slate-50 dark:focus:bg-slate-800 text-slate-700 dark:text-slate-300"
-                      >
-                        <UserPlus className="h-3.5 w-3.5 text-slate-400" />
-                        Entrar / Cadastrar
-                      </DropdownMenuItem>
-                    }
-                  />
+                  <DropdownMenuItem
+                    onClick={() => navigate("/auth")}
+                    className="rounded-lg text-xs gap-2 py-2 cursor-pointer focus:bg-slate-50 dark:focus:bg-slate-800 text-slate-700 dark:text-slate-300"
+                  >
+                    <UserPlus className="h-3.5 w-3.5 text-slate-400" />
+                    Entrar / Cadastrar
+                  </DropdownMenuItem>
                 </>
               )}
             </DropdownMenuContent>

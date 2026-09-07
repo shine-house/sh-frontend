@@ -5,7 +5,6 @@ import { useHousehold } from "@/hooks/useHousehold";
 import AppHeader from "@/components/AppHeader";
 import AppFooter from "@/components/AppFooter";
 import SharingDialog from "@/components/SharingDialog";
-import AuthDialog from "@/components/AuthDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -95,13 +94,13 @@ const SettingsPage = () => {
               ) : (
                 <div className="flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800/60">
                   <p className="text-xs font-medium text-slate-400 dark:text-slate-500">Você não está conectado a uma conta</p>
-                  <AuthDialog
-                    trigger={
-                      <Button className="shine-gradient rounded-xl h-9 text-xs font-semibold px-5">
-                        Entrar
-                      </Button>
-                    }
-                  />
+
+                  <Button
+                    className="shine-gradient rounded-xl h-9 text-xs font-semibold px-5"
+                    onClick={() => navigate("/auth")}
+                  >
+                    Entrar
+                  </Button>
                 </div>
               )}
             </CardContent>

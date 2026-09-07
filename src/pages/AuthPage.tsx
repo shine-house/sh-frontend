@@ -62,7 +62,7 @@ export default function AuthPage() {
 
     setIsLoading(true);
 
-     try {
+    try {
       await register(registerEmail, registerPassword, registerName);
       setPendingEmail(registerEmail);
     } catch (err: any) {
@@ -139,7 +139,7 @@ export default function AuthPage() {
             <Sparkles className="h-5 w-5" />
           </div>
           <CardTitle className="text-center text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
-            Tarefas em Zona
+            Shine House
           </CardTitle>
           <CardDescription className="text-center text-xs text-slate-500 dark:text-slate-400">
             Acesse sua conta ou crie uma nova para sincronizar seus ambientes
@@ -169,7 +169,7 @@ export default function AuthPage() {
               <form onSubmit={handleLogin} className="space-y-3.5">
                 <div className="space-y-1.5">
                   <Label htmlFor="login-email" className="text-[11px] font-semibold tracking-wide uppercase text-slate-500 dark:text-slate-400">
-                    Email [AUTH PAGHE]
+                    Email
                   </Label>
                   <Input
                     id="login-email"
@@ -206,14 +206,14 @@ export default function AuthPage() {
                   Entrar
                 </Button>
               </form>
-            <div className="flex justify-end">
-              <Link
-                to="/forgot-password"
-                className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
-              >
-                Esqueceu sua senha?
-              </Link>
-            </div>
+              <div className="flex justify-end">
+                <Link
+                  to="/forgot-password"
+                  className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
+                >
+                  Esqueceu sua senha?
+                </Link>
+              </div>
             </TabsContent>
 
             <TabsContent value="register" className="space-y-4 pt-1 focus-visible:outline-none">
@@ -229,57 +229,57 @@ export default function AuthPage() {
                   )}
 
                   <form onSubmit={handleRegister} className="space-y-3.5">
-                <div className="space-y-1.5">
-                  <Label htmlFor="register-name" className="text-[11px] font-semibold tracking-wide uppercase text-slate-500 dark:text-slate-400">
-                    Nome completo
-                  </Label>
-                  <Input
-                    id="register-name"
-                    type="text"
-                    value={registerName}
-                    onChange={(e) => setRegisterName(e.target.value)}
-                    placeholder="Seu nome"
-                    className="rounded-xl h-10 text-sm border-slate-200 focus-visible:ring-teal-500 dark:border-slate-800"
-                    required
-                  />
-                </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="register-name" className="text-[11px] font-semibold tracking-wide uppercase text-slate-500 dark:text-slate-400">
+                        Nome completo
+                      </Label>
+                      <Input
+                        id="register-name"
+                        type="text"
+                        value={registerName}
+                        onChange={(e) => setRegisterName(e.target.value)}
+                        placeholder="Seu nome"
+                        className="rounded-xl h-10 text-sm border-slate-200 focus-visible:ring-teal-500 dark:border-slate-800"
+                        required
+                      />
+                    </div>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="register-email" className="text-[11px] font-semibold tracking-wide uppercase text-slate-500 dark:text-slate-400">
-                    Email
-                  </Label>
-                  <Input
-                    id="register-email"
-                    type="email"
-                    value={registerEmail}
-                    onChange={(e) => setRegisterEmail(e.target.value)}
-                    placeholder="nome@exemplo.com"
-                    className="rounded-xl h-10 text-sm border-slate-200 focus-visible:ring-teal-500 dark:border-slate-800"
-                    required />
+                    <div className="space-y-1.5">
+                      <Label htmlFor="register-email" className="text-[11px] font-semibold tracking-wide uppercase text-slate-500 dark:text-slate-400">
+                        Email
+                      </Label>
+                      <Input
+                        id="register-email"
+                        type="email"
+                        value={registerEmail}
+                        onChange={(e) => setRegisterEmail(e.target.value)}
+                        placeholder="nome@exemplo.com"
+                        className="rounded-xl h-10 text-sm border-slate-200 focus-visible:ring-teal-500 dark:border-slate-800"
+                        required />
 
-                  Senha
-                  <Input
-                    id="register-password"
-                    type="password"
-                    value={registerPassword}
-                    onChange={(e) => setRegisterPassword(e.target.value)}
-                    placeholder="Mínimo 6 caracteres"
-                    className="rounded-xl h-10 text-sm border-slate-200 focus-visible:ring-teal-500 dark:border-slate-800"
-                    required
-                    minLength={6} />
+                      Senha
+                      <Input
+                        id="register-password"
+                        type="password"
+                        value={registerPassword}
+                        onChange={(e) => setRegisterPassword(e.target.value)}
+                        placeholder="Mínimo 6 caracteres"
+                        className="rounded-xl h-10 text-sm border-slate-200 focus-visible:ring-teal-500 dark:border-slate-800"
+                        required
+                        minLength={6} />
 
-                  Confirmar Senha
-                  <Input id="confirm-password"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Repita sua senha"
-                    className="rounded-xl h-10 text-sm border-slate-200 focus-visible:ring-teal-500 dark:border-slate-800"
-                    required
-                    minLength={6} />
-                </div>
+                      Confirmar Senha
+                      <Input id="confirm-password"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Repita sua senha"
+                        className="rounded-xl h-10 text-sm border-slate-200 focus-visible:ring-teal-500 dark:border-slate-800"
+                        required
+                        minLength={6} />
+                    </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                    <Button type="submit" className="w-full" disabled={isLoading}>
                       {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Criar Conta
                     </Button>

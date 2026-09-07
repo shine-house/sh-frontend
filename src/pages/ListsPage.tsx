@@ -6,7 +6,6 @@ import AppHeader from "@/components/AppHeader";
 import AppFooter from "@/components/AppFooter";
 import TaskList from "@/components/TaskList";
 import RoomList from "@/components/RoomList";
-import AuthDialog from "@/components/AuthDialog";
 import Onboarding from "@/components/Onboarding";
 import ZoneCycle from "@/components/ZoneCycle";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Calendar, Clock, Sparkles } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getNextDay } from "@/lib/utils";
-
 
 const ListsPage = () => {
   const { isAuthenticated } = useAuth();
@@ -52,17 +50,14 @@ const ListsPage = () => {
               <span className="text-xs sm:text-sm font-medium opacity-95">
                 Sem uma conta ativa, seus dados de ambientes serão salvos apenas localmente neste dispositivo.
               </span>
-              <AuthDialog
-                trigger={
                   <Button
+                  onClick={() => navigate("/auth")}
                     variant="outline"
                     size="sm"
                     className="shrink-0 self-end sm:self-auto h-8 text-xs font-semibold rounded-xl bg-amber-600 hover:bg-amber-700 text-white dark:bg-amber-500/20 dark:text-amber-300 dark:hover:bg-amber-500/30 border-none transition-all shadow-sm active:scale-95"
                   >
                     Entar / Criar Conta
                   </Button>
-                }
-              />
             </AlertDescription>
           </Alert>
         )}

@@ -3,10 +3,11 @@ import { useAuth } from "@/context/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { UserPlus, Info } from "lucide-react";
-import AuthDialog from "./AuthDialog";
+import {useNavigate} from "react-router-dom";
 
 const GuestModeNotice: React.FC = () => {
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   if (isAuthenticated) {
     return null;
@@ -19,19 +20,14 @@ const GuestModeNotice: React.FC = () => {
         <span className="text-xs sm:text-sm font-medium leading-relaxed opacity-90">
           Você está no modo visitante. Cadastre-se para salvar e sincronizar suas tarefas entre dispositivos.
         </span>
-
-        {/* Acoplamento do Botão com o Modal de Autenticação */}
-        <AuthDialog
-          trigger={
             <Button
+            onClick={() => navigate("/auth")}
               size="sm"
               className="shrink-0 self-end sm:self-auto h-8 text-xs font-semibold rounded-xl bg-amber-600 hover:bg-amber-700 text-white dark:bg-amber-500/20 dark:text-amber-300 dark:hover:bg-amber-500/30 border-none transition-all shadow-sm active:scale-95"
             >
               <UserPlus className="h-3.5 w-3.5 mr-1.5" />
               Criar Conta / Login
             </Button>
-          }
-        />
       </AlertDescription>
     </Alert>
   );
