@@ -2,11 +2,16 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useHousehold } from "@/hooks/useHousehold";
+import { useDeleteAccountMutation } from "@/features/auth/useDeleteAccountMutation";
+import { ApiError } from "@/lib/api/client";
 import AppHeader from "@/components/AppHeader";
 import AppFooter from "@/components/AppFooter";
 import SharingDialog from "@/components/SharingDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,18 +22,28 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
-import { UserCircle, LogOut, Share2, Bell, RefreshCcw, AlertTriangle, ShieldCheck } from "lucide-react";
+import { UserCircle, LogOut, Share2, Bell, RefreshCcw, AlertTriangle, ShieldCheck, Trash2, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+
+const DELETE_ACCOUNT_ERROR_MESSAGES: Record<string, string> = {
+  AUTH_CREDENTIALS_INVALID: "Senha incorreta. Verifique e tente novamente.",
+  AUTH_USER_NOT_FOUND: "Não foi possível localizar sua conta.",
+};
 
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
   const { isShared } = useHousehold();
+  const { mutateAsync: deleteAccount, isPending: isDeletingAccount } = useDeleteAccountMutation();
+
 
   const [isSharingDialogOpen, setIsSharingDialogOpen] = useState(false);
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
   const [isOnboardingResetDialogOpen, setIsOnboardingResetDialogOpen] = useState(false);
+  const [isDeleteAccountDialogOpen, setIsDeleteAccountDialogOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteAccountError, setDeleteAccountError] = useState<string | null>(null);
 
   const handleLogout = async () => {
     try {
@@ -51,6 +66,36 @@ const SettingsPage = () => {
 
   const handleEnableNotifications = () => {
     toast.success("Notificações ativadas!");
+  };
+
+   const resetDeleteAccountState = () => {
+    setDeletePassword("");
+    setDeleteAccountError(null);
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleteAccountError(null);
+
+    if (!deletePassword) {
+      setDeleteAccountError("Informe sua senha para confirmar.");
+      return;
+    }
+
+    try {
+      await deleteAccount({ password: deletePassword });
+      toast.success("Sua conta foi excluída permanentemente.");
+      setIsDeleteAccountDialogOpen(false);
+      resetDeleteAccountState();
+      navigate("/");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setDeleteAccountError(
+          DELETE_ACCOUNT_ERROR_MESSAGES[err.data.error_code] ?? err.data.message
+        );
+      } else {
+        setDeleteAccountError("Não foi possível excluir sua conta. Tente novamente mais tarde.");
+      }
+    }
   };
 
   return (
@@ -201,6 +246,42 @@ const SettingsPage = () => {
             </CardContent>
           </Card>
         </section>
+
+{isAuthenticated && (
+          <section className="space-y-4">
+            <h2 className="text-sm font-semibold text-rose-400 dark:text-rose-500/80 tracking-wider uppercase pl-1">
+              Zona de Perigo
+            </h2>
+
+            <Card className="border border-rose-200/60 dark:border-rose-900/40 bg-white dark:bg-slate-900 rounded-2xl shadow-sm transition-all duration-300 hover:shadow-md">
+              <CardHeader className="pb-2 pt-4 px-4">
+                <CardTitle className="text-base font-bold tracking-tight text-slate-900 dark:text-slate-50">Excluir conta</CardTitle>
+                <CardDescription className="text-xs text-slate-400 dark:text-slate-500">
+                  Remove permanentemente sua conta e todos os dados associados
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-4 pb-4 pt-2">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pt-2 border-t border-slate-50 dark:border-slate-800/40">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-rose-50 dark:bg-rose-950/30 rounded-xl text-rose-500">
+                      <Trash2 className="h-4 w-4" />
+                    </div>
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Esta ação não pode ser desfeita
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="rounded-xl border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-600 dark:border-rose-900/40 dark:hover:bg-rose-950/30 h-9 text-xs font-semibold px-4 self-end sm:self-auto"
+                    onClick={() => setIsDeleteAccountDialogOpen(true)}
+                  >
+                    Excluir conta
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+        )}
       </main>
 
       <AppFooter />
@@ -255,6 +336,68 @@ const SettingsPage = () => {
               className="rounded-xl h-9 text-xs font-semibold shine-gradient border-none transition-transform active:scale-[0.98]"
             >
               Sim, reiniciar tutorial
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+<AlertDialog
+        open={isDeleteAccountDialogOpen}
+        onOpenChange={(open) => {
+          setIsDeleteAccountDialogOpen(open);
+          if (!open) resetDeleteAccountState();
+        }}
+      >
+        <AlertDialogContent className="rounded-2xl max-w-[400px] p-6 border border-slate-200/60 dark:border-slate-800/80 bg-white dark:bg-slate-900 shadow-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-base font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-rose-500 shrink-0" />
+              Excluir conta permanentemente
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-slate-500 dark:text-slate-400">
+              Todos os seus dados — casas, cômodos, tarefas e histórico — serão apagados
+              permanentemente. Essa ação <strong>não pode ser desfeita</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-2 mt-2">
+            {deleteAccountError && (
+              <Alert variant="destructive" className="rounded-xl py-2.5">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-xs font-medium">{deleteAccountError}</AlertDescription>
+              </Alert>
+            )}
+
+            <Label htmlFor="delete-account-password" className="text-[11px] font-semibold tracking-wide uppercase text-slate-500 dark:text-slate-400">
+              Confirme sua senha
+            </Label>
+            <Input
+              id="delete-account-password"
+              type="password"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              placeholder="Sua senha atual"
+              className="rounded-xl h-10 text-sm border-slate-200 focus-visible:ring-rose-500 dark:border-slate-800"
+              disabled={isDeletingAccount}
+            />
+          </div>
+
+          <AlertDialogFooter className="gap-2 sm:gap-0 mt-4">
+            <AlertDialogCancel
+              className="rounded-xl border border-slate-200 dark:border-slate-800 h-9 text-xs font-semibold"
+              disabled={isDeletingAccount}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteAccount();
+              }}
+              disabled={isDeletingAccount}
+              className="rounded-xl h-9 text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white border-none transition-transform active:scale-[0.98]"
+            >
+              {isDeletingAccount && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+              Sim, excluir permanentemente
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -21,3 +21,7 @@ export interface VerifyEmailRequest {
 export interface ResendVerificationRequest {
   email: string;
 }
+
+export interface DeleteAccountRequest {
+  password: string;
+}

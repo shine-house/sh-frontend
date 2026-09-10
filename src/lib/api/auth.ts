@@ -1,7 +1,14 @@
 import { apiClient } from "./client";
 import type { AuthMeResponse } from "./types/user-types";
 import type { InfoMessage } from "./types/util-types";
-import type { ForgotPasswordRequest, RegisterRequest, ResendVerificationRequest, ResetPasswordRequest, VerifyEmailRequest } from "./types/auth-types";
+import type {
+  ForgotPasswordRequest,
+  RegisterRequest,
+  ResendVerificationRequest,
+  ResetPasswordRequest,
+  VerifyEmailRequest,
+  DeleteAccountRequest,
+} from "./types/auth-types";
 
 export const signIn = async (email: string, password: string) => {
   const data = await apiClient.post<AuthMeResponse>("/auth/login", { email, password });
@@ -35,3 +42,6 @@ export const forgotPassword = async (payload: ForgotPasswordRequest): Promise<In
 
 export const resetPassword = async (payload: ResetPasswordRequest): Promise<InfoMessage> =>
   apiClient.post<InfoMessage>("/auth/reset-password", payload);
+
+export const deleteAccount = async (payload: DeleteAccountRequest): Promise<InfoMessage> =>
+  apiClient.delete<InfoMessage>("/auth/me", payload);

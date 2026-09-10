@@ -17,6 +17,7 @@ const TOKEN_ERROR_MESSAGES: Record<string, string> = {
 };
 
 type VerificationStatus = "loading" | "success" | "error";
+const REDIRECT_DELAY_MS = 2500;
 
 export default function VerifyEmailPage() {
   const navigate = useNavigate();
@@ -66,7 +67,17 @@ export default function VerifyEmailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const handleResend = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (status !== "success") return;
+
+    const timeoutId = setTimeout(() => {
+      navigate("/auth");
+    }, REDIRECT_DELAY_MS);
+
+    return () => clearTimeout(timeoutId);
+  }, [status, navigate]);
+
+  const handleResend = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!resendEmail.trim()) return;
 
@@ -94,12 +105,12 @@ export default function VerifyEmailPage() {
           <Alert className="rounded-xl py-2.5 border-teal-100 bg-teal-50/50 dark:bg-teal-950/20 dark:border-teal-900/30">
             <CheckCircle2 className="h-4 w-4 text-teal-600 dark:text-teal-400" />
             <AlertDescription className="text-xs font-medium text-teal-800 dark:text-teal-200">
-              Sua conta foi verificada com sucesso! Você já pode fazer login.
+              Sua conta foi verificada com sucesso! Redirecionando para o login...
             </AlertDescription>
           </Alert>
           <Link to="/auth">
             <Button className="w-full rounded-xl h-10 text-xs font-semibold">
-              Ir para o login
+              Ir para o login agora
             </Button>
           </Link>
         </div>
