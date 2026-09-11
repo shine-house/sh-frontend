@@ -149,7 +149,7 @@ const OnboardingSteps = [
           </div>
           <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 p-3 rounded-xl shadow-sm">
             <p className="text-xs font-bold tracking-tight text-slate-800 dark:text-slate-200">Quarto</p>
-            <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-0.5">2 tarefas de zona</p>
+            <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-0.5">1 tarefa de zona</p>
           </div>
           <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 p-3 rounded-xl shadow-sm">
             <p className="text-xs font-bold tracking-tight text-slate-800 dark:text-slate-200">Banheiro</p>
@@ -163,7 +163,7 @@ const OnboardingSteps = [
             <Sparkles className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Mais 3 tarefas diárias</p>
+            <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Mais 6 tarefas diárias</p>
             <p className="text-[11px] text-slate-400 dark:text-slate-500">Para manter sua casa organizada todos os dias</p>
           </div>
         </div>
@@ -173,7 +173,7 @@ const OnboardingSteps = [
             <Sparkles className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Mais 3 tarefas semanais</p>
+            <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Mais 7 tarefas semanais</p>
             <p className="text-[11px] text-slate-400 dark:text-slate-500">Para manter sua casa limpa toda semana</p>
           </div>
         </div>
