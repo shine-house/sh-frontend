@@ -3,7 +3,6 @@ import { useAuth } from "@/context/AuthContext";
 import { createRoomsApi, type RoomsApi } from "@/lib/api/rooms";
 import { createZonesApi } from "@/lib/api/zones";
 import { ApiError } from "@/lib/api/client";
-import { householdKeys } from "@/lib/queryKeys/householdKeys";
 import { roomKeys } from "@/lib/queryKeys/roomKeys";
 
 export const useHouseholdData = () => {
