@@ -21,8 +21,8 @@ export interface RoomResponse {
   name: string;
   position: number;
   zone_cycle_position: number;
-  created_at: string; // ISO datetime
-  updated_at: string; // ISO datetime
+  created_at: string;
+  updated_at: string;
 }
 
 export interface RoomReorderRequest {

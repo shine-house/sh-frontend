@@ -32,9 +32,6 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isLoading: mutationsLoading,
   } = useTaskMutations();
 
-  // NOTE: tasks are no longer fetched here — each consumer fetches its own
-  // paginated/filtered slice via useTasksQuery. This context only owns
-  // rooms + activeZone (small, unpaginated, shared everywhere) plus mutations.
   const { rooms, activeZone, isLoading: householdLoading, refetch } = useHouseholdData();
   const isLoading = householdLoading || mutationsLoading;
 

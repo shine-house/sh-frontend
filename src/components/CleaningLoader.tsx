@@ -2,22 +2,22 @@ import React, { useState, useEffect } from "react";
 import { Home, Sparkles, CheckCircle2 } from "lucide-react";
 
 interface CleaningLoaderProps {
-  message?: string; // Permite passar uma mensagem customizada se necessário
+  message?: string;
 }
 
 const CleaningLoader: React.FC<CleaningLoaderProps> = ({ message }) => {
   const defaultPhrases = [
+    "Dizendo adeus ao caos doméstico...",
+    "Feito é melhor que perfeito!",
     "Espanando a poeira do servidor...",
     "Deixando a pia brilhando em 15 minutos...",
     "São só 15 minutinhos...",
     "Organizando os cômodos em zonas...",
-    "Dizendo adeus ao caos doméstico...",
-    "Feito é melhor que perfeito!"
   ];
 
   const [currentPhrase, setCurrentPhrase] = useState(message || defaultPhrases[0]);
 
-  // Rotaciona as frases divertidas se o carregamento demorar e nenhuma mensagem fixa for passada
+
   useEffect(() => {
     if (message) {
       setCurrentPhrase(message);

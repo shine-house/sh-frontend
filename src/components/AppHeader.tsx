@@ -33,7 +33,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     logout
   } = useAuth();
 
-  const navigate = useNavigate(); // Inicialização do hook de navegação
+  const navigate = useNavigate();
   const [isSharingDialogOpen, setIsSharingDialogOpen] = useState(false);
   const { isShared } = useHousehold();
 

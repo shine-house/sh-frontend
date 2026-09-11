@@ -5,144 +5,6 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, ChevronRight, Home, Clock, Sparkles } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-
-// const OnboardingSteps = [
-//   {
-//     title: "Bem-vindo ao Shine House",
-//     description: "Vamos organizar sua casa seguindo o método FlyLady, sem estresse e com resultados reais!",
-//     content: (
-//       <div className="space-y-4 mt-2">
-//         <p className="text-muted-foreground">
-//           O método FlyLady ajuda você a organizar sua casa com pequenas tarefas diárias e semanais, tornando a limpeza mais fácil e menos estressante.
-//         </p>
-//         <div className="flex items-center gap-3 bg-muted/50 p-3 rounded-lg">
-//           <CheckCircle2 className="h-8 w-8 text-shine-teal" />
-//           <div>
-//             <p className="font-medium">Pequenos passos</p>
-//             <p className="text-sm text-muted-foreground">Trabalhe por 15 minutos de cada vez, sem tentar fazer tudo de uma vez. Feito, é melhor que perfeito!</p>
-//           </div>
-//         </div>
-//         <div className="flex items-center gap-3 bg-muted/50 p-3 rounded-lg">
-//           <Home className="h-8 w-8 text-shine-teal" />
-//           <div>
-//             <p className="font-medium">Zonas da casa</p>
-//             <p className="text-sm text-muted-foreground">Foco em uma área por semana</p>
-//           </div>
-//         </div>
-//         <div className="flex items-center gap-3 bg-muted/50 p-3 rounded-lg">
-//           <Clock className="h-8 w-8 text-shine-teal" />
-//           <div>
-//             <p className="font-medium">Rotinas simples e customizáveis</p>
-//             <p className="text-sm text-muted-foreground">Tarefas diárias e semanais consistentes</p>
-//           </div>
-//         </div>
-//       </div>
-//     )
-//   },
-//   {
-//     title: "Como funciona",
-//     description: "O Shine House organiza as tarefas em três categorias:",
-//     content: (
-//       <div className="space-y-4 mt-2">
-//         <Tabs defaultValue="daily">
-//           <TabsList className="grid grid-cols-3">
-//             <TabsTrigger value="daily">Diárias</TabsTrigger>
-//             <TabsTrigger value="weekly">Semanais</TabsTrigger>
-//             <TabsTrigger value="zone">Zonas</TabsTrigger>
-//           </TabsList>
-//           <TabsContent value="daily" className="space-y-2 mt-2">
-//             <div className="bg-muted/50 p-3 rounded-lg">
-//               <p className="font-medium">Rotina diária</p>
-//               <p className="text-sm text-muted-foreground">Pequenas tarefas para fazer todos os dias, como arrumar a cama e lavar a louça.</p>
-//             </div>
-//             <ul className="space-y-2">
-//               <li className="flex items-center gap-2 text-sm">
-//                 <CheckCircle2 className="h-4 w-4 text-shine-teal" /> Arrumar a cama
-//               </li>
-//               <li className="flex items-center gap-2 text-sm">
-//                 <CheckCircle2 className="h-4 w-4 text-shine-teal" /> Lavar a louça
-//               </li>
-//               <li className="flex items-center gap-2 text-sm">
-//                 <CheckCircle2 className="h-4 w-4 text-shine-teal" /> Limpar a pia do banheiro
-//               </li>
-//             </ul>
-//           </TabsContent>
-//           <TabsContent value="weekly" className="space-y-2 mt-2">
-//             <div className="bg-muted/50 p-3 rounded-lg">
-//               <p className="font-medium">Tarefas semanais</p>
-//               <p className="text-sm text-muted-foreground">Tarefas para fazer uma vez por semana em toda a casa.</p>
-//             </div>
-//             <ul className="space-y-2">
-//               <li className="flex items-center gap-2 text-sm">
-//                 <CheckCircle2 className="h-4 w-4 text-shine-teal" /> Limpar os armários
-//               </li>
-//               <li className="flex items-center gap-2 text-sm">
-//                 <CheckCircle2 className="h-4 w-4 text-shine-teal" /> Lavar roupas de cama
-//               </li>
-//               <li className="flex items-center gap-2 text-sm">
-//                 <CheckCircle2 className="h-4 w-4 text-shine-teal" /> Limpar vidros
-//               </li>
-//             </ul>
-//           </TabsContent>
-//           <TabsContent value="zone" className="space-y-2 mt-2">
-//             <div className="bg-muted/50 p-3 rounded-lg">
-//               <p className="font-medium">Zonas da casa</p>
-//               <p className="text-sm text-muted-foreground">Cada semana focamos em uma zona específica da casa para uma limpeza mais profunda.</p>
-//             </div>
-//             <ul className="space-y-2">
-//               <li className="flex items-center gap-2 text-sm">
-//                 <CheckCircle2 className="h-4 w-4 text-shine-teal" /> Cozinha: limpar fogão, geladeira
-//               </li>
-//               <li className="flex items-center gap-2 text-sm">
-//                 <CheckCircle2 className="h-4 w-4 text-shine-teal" /> Sala: aspirar sofá, limpar prateleiras
-//               </li>
-//               <li className="flex items-center gap-2 text-sm">
-//                 <CheckCircle2 className="h-4 w-4 text-shine-teal" /> Quarto: organizar gavetas, limpar embaixo da cama
-//               </li>
-//             </ul>
-//           </TabsContent>
-//         </Tabs>
-//       </div>
-//     )
-//   },
-//   {
-//     title: "Vamos começar!",
-//     description: "O Shine House já preparou uma lista inicial baseada nas zonas comuns de uma casa.",
-//     content: (
-//       <div className="space-y-4 mt-2">
-//         <p className="text-muted-foreground">
-//           Você pode personalizar tudo após este tutorial:
-//         </p>
-//         <div className="grid grid-cols-2 gap-2">
-//           <div className="bg-muted/50 p-3 rounded-lg">
-//             <p className="font-medium">Cozinha</p>
-//             <p className="text-xs text-muted-foreground mt-1">2 tarefas de zona</p>
-//           </div>
-//           <div className="bg-muted/50 p-3 rounded-lg">
-//             <p className="font-medium">Sala</p>
-//             <p className="text-xs text-muted-foreground mt-1">2 tarefas de zona</p>
-//           </div>
-//           <div className="bg-muted/50 p-3 rounded-lg">
-//             <p className="font-medium">Quarto</p>
-//             <p className="text-xs text-muted-foreground mt-1">2 tarefas de zona</p>
-//           </div>
-//           <div className="bg-muted/50 p-3 rounded-lg">
-//             <p className="font-medium">Banheiro</p>
-//             <p className="text-xs text-muted-foreground mt-1">2 tarefas de zona</p>
-//           </div>
-//         </div>
-//         <div className="bg-muted/50 p-3 rounded-lg">
-//           <p className="font-medium">Mais 3 tarefas diárias</p>
-//           <p className="text-sm text-muted-foreground">Para manter sua casa organizada todos os dias</p>
-//         </div>
-//         <div className="bg-muted/50 p-3 rounded-lg">
-//           <p className="font-medium">Mais 3 tarefas semanais</p>
-//           <p className="text-sm text-muted-foreground">Para manter sua casa limpa toda semana</p>
-//         </div>
-//       </div>
-//     )
-//   }
-// ];
 const OnboardingSteps = [
   {
     title: "Bem-vindo ao Shine House",
@@ -153,7 +15,6 @@ const OnboardingSteps = [
           Vamos te ajudar a organizar sua casa com pequenas tarefas diárias e semanais, tornando a manutenção doméstica menos cansativa, fazendo um pouco por vez.
         </p>
 
-        {/* Bloco 1 */}
         <div className="flex items-start gap-3.5 bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/60 p-3.5 rounded-xl shadow-sm">
           <div className="p-2 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-xl shrink-0 mt-0.5">
             <CheckCircle2 className="h-5 w-5 stroke-[2.2]" />
@@ -171,11 +32,11 @@ const OnboardingSteps = [
           </div>
           <div>
             <p className="text-sm font-bold tracking-tight text-slate-800 dark:text-slate-100">Zonas da casa</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5">Foco total em apenas uma área específica por semana para evitar apenas um dia pro faxinão.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5">Foco total em apenas uma área específica por semana para evitar apenas um dia pro faxinão, que não é suficiente para deixar tudo no lugar.</p>
           </div>
         </div>
 
-        {/* Bloco 3 */}
+
         <div className="flex items-start gap-3.5 bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/60 p-3.5 rounded-xl shadow-sm">
           <div className="p-2 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-xl shrink-0 mt-0.5">
             <Clock className="h-5 w-5 stroke-[2.2]" />
@@ -211,7 +72,7 @@ const OnboardingSteps = [
           <TabsContent value="daily" className="space-y-3.5 mt-3 focus-visible:outline-none focus-visible:ring-0">
             <div className="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/60 p-3.5 rounded-xl shadow-sm">
               <p className="text-sm font-bold tracking-tight text-slate-800 dark:text-slate-100">Rotina diária</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5">Pequenas tarefas rápidas para fazer todos os dias, como arrumar a cama e manter a pia limpa.</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5">Pequenas tarefas rápidas para fazer todos os dias, que levem até 15 minutos.</p>
             </div>
             <ul className="space-y-2.5 pl-1.5">
               <li className="flex items-center gap-2.5 text-xs font-medium text-slate-600 dark:text-slate-300">

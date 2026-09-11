@@ -22,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
-import { UserCircle, LogOut, Share2, Bell, RefreshCcw, AlertTriangle, ShieldCheck, Trash2, AlertCircle, Loader2 } from "lucide-react";
+import { UserCircle, LogOut, Share2, RefreshCcw, AlertTriangle, Trash2, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -62,10 +62,6 @@ const SettingsPage = () => {
     toast.success("Onboarding será reiniciado na próxima abertura do app");
     setIsOnboardingResetDialogOpen(false);
     navigate("/lists");
-  };
-
-  const handleEnableNotifications = () => {
-    toast.success("Notificações ativadas!");
   };
 
    const resetDeleteAccountState = () => {
@@ -190,32 +186,6 @@ const SettingsPage = () => {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Card de Notificações */}
-            <Card className="border border-slate-200/60 dark:border-slate-800/80 bg-white dark:bg-slate-900 rounded-2xl shadow-sm transition-all duration-300 hover:shadow-md">
-              <CardHeader className="pb-2 pt-4 px-4">
-                <CardTitle className="text-base font-bold tracking-tight text-slate-900 dark:text-slate-50">Notificações</CardTitle>
-                <CardDescription className="text-xs text-slate-400 dark:text-slate-500">
-                  Receba lembretes para suas tarefas
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="px-4 pb-4 pt-2">
-                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pt-2 border-t border-slate-50 dark:border-slate-800/40">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-slate-50 dark:bg-slate-950 rounded-xl text-slate-400">
-                      <Bell className="h-4 w-4" />
-                    </div>
-                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">Lembretes de tarefas</p>
-                  </div>
-                  <Button
-                    onClick={handleEnableNotifications}
-                    className="shine-gradient rounded-xl h-9 text-xs font-semibold px-4 self-end sm:self-auto"
-                  >
-                    Ativar
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </section>
 
@@ -226,7 +196,6 @@ const SettingsPage = () => {
           </h2>
 
           <Card className="border border-slate-200/60 dark:border-slate-800/80 bg-white dark:bg-slate-900 rounded-2xl shadow-sm transition-all duration-300 hover:shadow-md">
-            {/* ... continuação exata a partir do conteúdo do Card de Experiência ... */}
             <CardContent className="px-4 pb-4 pt-2">
               <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pt-2 border-t border-slate-50 dark:border-slate-800/40">
                 <div className="flex items-center gap-3">

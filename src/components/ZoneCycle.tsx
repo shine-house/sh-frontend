@@ -19,7 +19,6 @@ const ZoneCycle: React.FC = () => {
     setLocalRooms(sorted);
   }, [rooms]);
 
-  // Altera a ordem apenas na interface (estado local)
   const moveRoom = (index: number, direction: "up" | "down") => {
     const targetIndex = direction === "up" ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= localRooms.length) return;

@@ -16,7 +16,7 @@ export const createOptimisticTask = (data: TaskCreate, householdId: string): Tas
     name: data.name,
     description: data.description ?? null,
     type: data.type,
-    sort_order: 0, // backend-owned; irrelevant until reconciled
+    sort_order: 0,
     created_at: now,
     updated_at: now,
     is_available: true,

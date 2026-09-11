@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2, Loader2, ShieldAlert, Sparkles } from "lucide-react";
+import { CheckCircle2, Loader2, ShieldAlert, Sparkles } from "lucide-react";
 
 const TOKEN_ERROR_MESSAGES: Record<string, string> = {
   REG_VERIFICATION_TOKEN_INVALID: "Este link de verificação é inválido ou já foi utilizado.",
@@ -63,8 +63,6 @@ export default function VerifyEmailPage() {
     return () => {
       cancelled = true;
     };
-    // Runs exactly once per token value on mount.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   useEffect(() => {
@@ -112,7 +110,7 @@ export default function VerifyEmailPage() {
             <Button className="w-full rounded-xl h-10 text-xs font-semibold">
               Ir para o login agora
             </Button>
-          </Link>
+        </Link>
         </div>
       );
     }

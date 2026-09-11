@@ -40,7 +40,6 @@ const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, re
   const [page, setPage] = useState(DEFAULT_PAGE);
   const [size, setSize] = useState(DEFAULT_SIZE);
 
-  // Capturando também o isLoading para a primeira busca da query
   const { tasks, metadata, isFetching, isLoading } = useTasksQuery({ roomId, type, page, size });
 
   const [isAddingTask, setIsAddingTask] = useState(false);
@@ -133,9 +132,7 @@ const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, re
         )}
       </div>
 
-      {/* Gerenciamento de Estados de Loading Local / Skeletons */}
       {isLoading && tasks.length === 0 ? (
-        // Estado 1: Carregamento Inicial (Skeletons)
         <div className="space-y-2 animate-in fade-in duration-300">
           {[1, 2, 3].map((n) => (
             <div
@@ -177,7 +174,6 @@ const TaskList: React.FC<TaskListProps> = ({ type, icon: Icon, roomId, title, re
             ))}
           </div>
 
-          {/* Spinner flutuante sutil se houver paginação ou atualização paralela */}
           {isFetching && (
             <div className="absolute top-2 right-2 bg-white/80 dark:bg-slate-900/80 p-1.5 rounded-lg border border-slate-100 dark:border-slate-800 shadow-sm backdrop-blur-sm animate-in fade-in duration-200">
               <Loader2 className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400 animate-spin" />
